@@ -42,5 +42,13 @@ urlpatterns = [
         'api/users/logout/',
         views.LogoutAPIView.as_view(),
         name='api_logout'
-    )
+    ),
+
+    # templates urls
+
+    path('users/register/', views.register_view, name='register'),
+    path('users/login/', views.login_view, name='login'),
+    path('users/logout/', views.logout_view, name='logout'),
+    path('users/profile/', views.profile_view, name='profile'),
+    path('dashboard/', views.dashboard_view, name='dashboard'),
 ]

@@ -1,3 +1,12 @@
+from django.shortcuts import render, redirect
+from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+
+from .forms import RegisterForm, LoginForm, UpdateProfileForm
+
+
+
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -74,3 +83,92 @@ class LogoutAPIView(APIView):
             )
 
 
+# TEMPLATE VIEWS
+
+def register_view(request):
+
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        form = RegisterForm(request.POST)
+
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+
+            messages.success(request, f'Welcome {user.first_name}! Your account has been created.')
+            return redirect('dashboard')
+        
+        else:
+            messages.error(request, 'Please correct the errors below.')
+
+    else:
+        form = RegisterForm()
+
+    return render(request, 'users/register.html', {'form': form})
+
+def login_view(request):
+    
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        form = LoginForm(request, data=request.POST)
+
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            messages.success(request, f'Welcome back, {user.first_name or user.username}!')
+
+            next_url = request.GET.get('next', 'dashboard')
+            return redirect(next_url)
+        else:
+            messages.error(request, 'Invalid username or password.')
+
+    else:
+        form = LoginForm()
+
+    return render(request, 'users/login.html', {'form': form})
+
+def logout_view(request):
+    if request.method == 'POST':
+        logout(request)
+        messages.success(request, 'You have been logged out.')
+    return redirect('login')
+
+
+@login_required
+def dashboard_view(request):
+    user = request.user
+
+    context = {
+        'user': user,
+        'is_admin': user.is_admin,
+        'is_librarian': user.is_librarian,
+        'is_member': user.is_member,
+    }
+    return render(request, 'dashboard.html', context)
+
+
+@login_required
+def profile_view(request):
+
+    if request.method == 'POST':
+        form = UpdateProfileForm(
+            request.POST,
+            request.FILES,   # request.FILES needed for image uploads
+            instance=request.user
+        )
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Profile updated successfully.')
+            return redirect('profile')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+
+    else:
+        form = UpdateProfileForm(instance=request.user)
+
+    return render(request, 'users/profile.html', {'form': form})
