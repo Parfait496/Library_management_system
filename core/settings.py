@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'crispy_forms',
     'crispy_bootstrap5',
+    'rest_framework_simplejwt.token_blacklist',
 
     # apps
     'users',
