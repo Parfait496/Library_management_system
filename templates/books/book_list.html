@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}Book Catalogue — LibraryMS{% endblock %}
+
+{% block content %}
+
+<!-- Page header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-book"></i> Book Catalogue</h2>
+
+    <!-- Only librarians and admins see the Add Book button -->
+    {% if request.user.role in 'LIBRARIAN,ADMIN' %}
+        <a href="{% url 'book_add' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Add Book
+        </a>
+    {% endif %}
+</div>
+
+<!-- Search and filter form -->
+<!-- method="GET" puts the search query in the URL as ?search=... -->
+<form method="GET" class="row g-3 mb-4">
+    <div class="col-md-6">
+        <input type="text"
+               name="search"
+               class="form-control"
+               placeholder="Search by title, author, ISBN..."
+               value="{{ search_query }}">
+    </div>
+    <div class="col-md-3">
+        <select name="genre" class="form-select">
+            <option value="">All Genres</option>
+            {% for genre in genres %}
+                <option value="{{ genre.id }}"
+                    {% if selected_genre == genre.id|stringformat:"s" %}selected{% endif %}>
+                    {{ genre.name }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-3">
+        <button type="submit" class="btn btn-outline-primary w-100">
+            <i class="bi bi-search"></i> Search
+        </button>
+    </div>
+</form>
+
+<!-- Results count -->
+<p class="text-muted">
+    Showing {{ books.count }} book{{ books.count|pluralize }}
+    {% if search_query %}for "{{ search_query }}"{% endif %}
+</p>
+
+<!-- Books grid -->
+{% if books %}
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for book in books %}
+            <div class="col">
+                <div class="card h-100 shadow-sm">
+
+                    <!-- Book cover or placeholder -->
+                    {% if book.cover_image %}
+                        <img src="{{ book.cover_image.url }}"
+                             class="card-img-top"
+                             style="height: 200px; object-fit: cover;"
+                             alt="{{ book.title }}">
+                    {% else %}
+                        <div class="bg-secondary d-flex align-items-center
+                                    justify-content-center"
+                             style="height: 200px;">
+                            <i class="bi bi-book text-white" style="font-size: 3rem;"></i>
+                        </div>
+                    {% endif %}
+
+                    <div class="card-body">
+                        <h6 class="card-title fw-bold">{{ book.title }}</h6>
+                        <p class="card-text text-muted small">
+                            by {{ book.author }}
+                        </p>
+                        {% if book.genre %}
+                            <span class="badge bg-secondary">{{ book.genre }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="card-footer d-flex justify-content-between align-items-center">
+                        <!-- Availability badge -->
+                        {% if book.is_available %}
+                            <span class="badge bg-success">
+                                {{ book.availability_status }}
+                            </span>
+                        {% else %}
+                            <span class="badge bg-danger">Not Available</span>
+                        {% endif %}
+
+                        <a href="{% url 'book_detail' book.pk %}"
+                           class="btn btn-sm btn-outline-primary">
+                            View Details
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+{% else %}
+    <!-- Empty state -->
+    <div class="text-center py-5">
+        <i class="bi bi-search" style="font-size: 3rem; color: #ccc;"></i>
+        <h4 class="mt-3 text-muted">No books found</h4>
+        <p class="text-muted">Try a different search term or browse all books.</p>
+        <a href="{% url 'book_list' %}" class="btn btn-outline-primary">
+            Clear Search
+        </a>
+    </div>
+{% endif %}
+
+{% endblock %}

@@ -3,30 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Page title — child templates override this block -->
     <title>{% block title %}Library Management System{% endblock %}</title>
 
-    <!-- Bootstrap 5 CSS via CDN — no installation needed -->
+    <!-- Bootstrap 5 CSS via CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
 
+    <!-- Child templates can add extra CSS here -->
     {% block extra_css %}{% endblock %}
 </head>
 <body class="bg-light">
 
     <!-- ================================================================
-         NAVBAR — shown on every page that extends base.html
+         NAVBAR
     ================================================================ -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
 
-            <!-- Brand/logo -->
+            <!-- Brand -->
             <a class="navbar-brand fw-bold" href="{% url 'dashboard' %}">
                 <i class="bi bi-book"></i> LibraryMS
             </a>
 
-            <!-- Hamburger button for mobile -->
+            <!-- Hamburger for mobile -->
             <button class="navbar-toggler" type="button"
                     data-bs-toggle="collapse"
                     data-bs-target="#navbarNav">
@@ -34,23 +37,35 @@
             </button>
 
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
 
+                <!-- Left side links -->
+                <ul class="navbar-nav me-auto">
                     {% if request.user.is_authenticated %}
+
+                        <!-- Dashboard — all logged in users -->
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'dashboard' %}">
                                 <i class="bi bi-speedometer2"></i> Dashboard
                             </a>
                         </li>
 
-                        <!-- Books link — visible to all logged-in users -->
+                        <!-- Books — all logged in users -->
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="{% url 'book_list' %}">
                                 <i class="bi bi-book"></i> Books
                             </a>
                         </li>
 
-                        <!-- Only Librarians and Admins see this -->
+                        <!-- Add Book — librarians and admins only -->
+                        {% if request.user.is_librarian or request.user.is_admin %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'book_add' %}">
+                                <i class="bi bi-plus-circle"></i> Add Book
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        <!-- Members — librarians and admins only -->
                         {% if request.user.is_librarian or request.user.is_admin %}
                         <li class="nav-item">
                             <a class="nav-link" href="#">
@@ -59,7 +74,7 @@
                         </li>
                         {% endif %}
 
-                        <!-- Only Admins see this -->
+                        <!-- Admin Panel — admins only -->
                         {% if request.user.is_admin %}
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'admin:index' %}">
@@ -71,16 +86,18 @@
                     {% endif %}
                 </ul>
 
-                <!-- Right side of navbar -->
+                <!-- Right side links -->
                 <ul class="navbar-nav">
                     {% if request.user.is_authenticated %}
-                        <!-- Show username and role badge -->
+
+                        <!-- User dropdown -->
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#"
                                data-bs-toggle="dropdown">
                                 <i class="bi bi-person-circle"></i>
-                                {{ request.user.username }}
-                                <!-- Role badge with different colors per role -->
+                                {{ request.user.first_name|default:request.user.username }}
+
+                                <!-- Role badge — different color per role -->
                                 {% if request.user.is_admin %}
                                     <span class="badge bg-danger">Admin</span>
                                 {% elif request.user.is_librarian %}
@@ -89,6 +106,7 @@
                                     <span class="badge bg-success">Member</span>
                                 {% endif %}
                             </a>
+
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li>
                                     <a class="dropdown-item" href="{% url 'profile' %}">
@@ -97,60 +115,74 @@
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
-                                    <!-- Logout must be POST for security -->
-                                    <form method="post" action="{% url 'logout' %}">
+                                    <!-- Logout uses POST for security
+                                         GET logout is vulnerable to CSRF attacks -->
+                                    <form method="POST" action="{% url 'logout' %}">
                                         {% csrf_token %}
-                                        <button type="submit" class="dropdown-item text-danger">
+                                        <button type="submit"
+                                                class="dropdown-item text-danger">
                                             <i class="bi bi-box-arrow-right"></i> Logout
                                         </button>
                                     </form>
                                 </li>
                             </ul>
                         </li>
+
                     {% else %}
+                        <!-- Show login/register when not logged in -->
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'login' %}">Login</a>
+                            <a class="nav-link" href="{% url 'login' %}">
+                                <i class="bi bi-box-arrow-in-right"></i> Login
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'register' %}">Register</a>
+                            <a class="nav-link" href="{% url 'register' %}">
+                                <i class="bi bi-person-plus"></i> Register
+                            </a>
                         </li>
                     {% endif %}
                 </ul>
+
             </div>
         </div>
     </nav>
 
     <!-- ================================================================
-         MESSAGES — Django's one-time notification system
-         These show success/error messages from views
+         MESSAGES — one-time notifications from views
+         message.tags gives the Bootstrap alert class
+         e.g. messages.success → alert-success (green)
+              messages.error   → alert-danger  (red)
     ================================================================ -->
     {% if messages %}
     <div class="container mt-3">
         {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show"
+             role="alert">
             {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <button type="button" class="btn-close"
+                    data-bs-dismiss="alert"></button>
         </div>
         {% endfor %}
     </div>
     {% endif %}
 
     <!-- ================================================================
-         MAIN CONTENT — each page fills this block
+         MAIN CONTENT — child templates fill this block
     ================================================================ -->
-    <main class="container mt-4">
-        {% block content %}
-        {% endblock %}
+    <main class="container mt-4 mb-5">
+        {% block content %}{% endblock %}
     </main>
 
     <!-- Footer -->
-    <footer class="bg-dark text-white text-center py-3 mt-5">
-        <p class="mb-0">&copy; 2024 Library Management System</p>
+    <footer class="bg-dark text-white text-center py-3">
+        <p class="mb-0">&copy; 2025 Library Management System</p>
     </footer>
 
-    <!-- Bootstrap 5 JS via CDN — needed for dropdowns, navbar toggle -->
+    <!-- Bootstrap 5 JS via CDN — needed for dropdowns and navbar toggle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
+    <!-- Child templates can add extra JS here -->
     {% block extra_js %}{% endblock %}
+
 </body>
 </html>
