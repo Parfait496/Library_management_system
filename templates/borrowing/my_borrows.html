@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% block title %}My Borrows — LibraryMS{% endblock %}
+
+{% block content %}
+
+<h2 class="mb-4">
+    <i class="bi bi-clock-history"></i> My Borrowing
+</h2>
+
+<!-- Active Loans -->
+<h5 class="text-primary mb-3">Active Loans & Requests</h5>
+
+{% if active_loans %}
+<div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Book</th>
+                <th>Status</th>
+                <th>Requested</th>
+                <th>Due Date</th>
+                <th>Fine</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in active_loans %}
+            <tr>
+                <td>
+                    <strong>{{ record.book.title }}</strong>
+                    <br>
+                    <small class="text-muted">{{ record.book.author }}</small>
+                </td>
+                <td>
+                    <!-- Different badge color per status -->
+                    {% if record.status == 'REQUESTED' %}
+                        <span class="badge bg-warning text-dark">Requested</span>
+                    {% elif record.status == 'APPROVED' %}
+                        <span class="badge bg-info">Approved</span>
+                    {% elif record.status == 'BORROWED' %}
+                        <span class="badge bg-primary">Borrowed</span>
+                    {% elif record.status == 'OVERDUE' %}
+                        <span class="badge bg-danger">Overdue</span>
+                    {% endif %}
+                </td>
+                <td>{{ record.request_date|date:"M d, Y" }}</td>
+                <td>
+                    {% if record.due_date %}
+                        {{ record.due_date|date:"M d, Y" }}
+                        {% if record.is_overdue %}
+                            <br>
+                            <small class="text-danger">
+                                {{ record.days_overdue }} days overdue
+                            </small>
+                        {% endif %}
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
+                <td>
+                    {% if record.fine_amount > 0 %}
+                        <span class="text-danger fw-bold">
+                            {{ record.fine_amount }} RWF
+                        </span>
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% else %}
+    <div class="alert alert-info">
+        You have no active loans or requests.
+        <a href="{% url 'book_list' %}">Browse books</a> to get started.
+    </div>
+{% endif %}
+
+<hr class="my-4">
+
+<!-- Borrowing History -->
+<h5 class="text-secondary mb-3">Borrowing History</h5>
+
+{% if history %}
+<div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-secondary">
+            <tr>
+                <th>Book</th>
+                <th>Status</th>
+                <th>Borrowed</th>
+                <th>Returned</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in history %}
+            <tr>
+                <td>
+                    <strong>{{ record.book.title }}</strong>
+                    <br>
+                    <small class="text-muted">{{ record.book.author }}</small>
+                </td>
+                <td>
+                    {% if record.status == 'RETURNED' %}
+                        <span class="badge bg-success">Returned</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Rejected</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {{ record.borrow_date|date:"M d, Y"|default:"—" }}
+                </td>
+                <td>
+                    {{ record.return_date|date:"M d, Y"|default:"—" }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+    <p class="text-muted">No borrowing history yet.</p>
+{% endif %}
+
+{% endblock %}

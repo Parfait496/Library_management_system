@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}Resolve Fine — LibraryMS{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+
+                <h4 class="mb-4">
+                    <i class="bi bi-check2-circle"></i> Resolve Fine
+                </h4>
+
+                <!-- Fine details -->
+                <div class="alert alert-light border mb-4">
+                    <p class="mb-1">
+                        <strong>Member:</strong>
+                        {{ fine.member.get_full_name }}
+                        ({{ fine.member.username }})
+                    </p>
+                    <p class="mb-1">
+                        <strong>Book:</strong>
+                        {{ fine.borrow_record.book.title }}
+                    </p>
+                    <p class="mb-1">
+                        <strong>Days Overdue:</strong>
+                        {{ fine.days_overdue }} days
+                    </p>
+                    <p class="mb-0">
+                        <strong class="text-danger">
+                            Amount Due: {{ fine.amount }} RWF
+                        </strong>
+                    </p>
+                </div>
+
+                <!-- Resolve form — no Django form class needed here
+                     we just use raw POST fields and read them in the view -->
+                <form method="POST">
+                    {% csrf_token %}
+
+                    <!-- Optional note -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Note
+                            <span class="text-muted fw-normal">
+                                (optional — required when waiving)
+                            </span>
+                        </label>
+                        <textarea name="note"
+                                  class="form-control"
+                                  rows="3"
+                                  placeholder="Reason for waiving, payment method, etc.">
+                        </textarea>
+                    </div>
+
+                    <!-- Two submit buttons with different action values -->
+                    <div class="d-flex gap-2">
+                        <button type="submit"
+                                name="action"
+                                value="paid"
+                                class="btn btn-success">
+                            <i class="bi bi-cash"></i> Mark as Paid
+                        </button>
+                        <button type="submit"
+                                name="action"
+                                value="waive"
+                                class="btn btn-warning">
+                            <i class="bi bi-x-circle"></i> Waive Fine
+                        </button>
+                        <a href="{% url 'fines_list' %}"
+                           class="btn btn-outline-secondary">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

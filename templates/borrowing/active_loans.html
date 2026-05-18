@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}Active Loans — LibraryMS{% endblock %}
+
+{% block content %}
+
+<h2 class="mb-4">
+    <i class="bi bi-book-half"></i> Active Loans
+</h2>
+
+{% if active %}
+<div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Member</th>
+                <th>Book</th>
+                <th>Borrowed On</th>
+                <th>Due Date</th>
+                <th>Status</th>
+                <th>Fine</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in active %}
+            <tr class="{% if record.is_overdue %}table-danger{% endif %}">
+                <td>{{ record.member.username }}</td>
+                <td>
+                    <strong>{{ record.book.title }}</strong>
+                    <br>
+                    <small class="text-muted">{{ record.book.author }}</small>
+                </td>
+                <td>{{ record.borrow_date|date:"M d, Y"|default:"—" }}</td>
+                <td>
+                    {{ record.due_date|date:"M d, Y"|default:"—" }}
+                    {% if record.is_overdue %}
+                        <br>
+                        <small class="text-danger fw-bold">
+                            {{ record.days_overdue }} days overdue
+                        </small>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if record.status == 'BORROWED' %}
+                        <span class="badge bg-primary">Borrowed</span>
+                    {% elif record.status == 'OVERDUE' %}
+                        <span class="badge bg-danger">Overdue</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if record.fine_amount > 0 %}
+                        <span class="text-danger fw-bold">
+                            {{ record.fine_amount }} RWF
+                        </span>
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
+                <td>
+                    <!-- Mark as returned form — POST for safety -->
+                    <form method="POST"
+                          action="{% url 'mark_returned' record.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-success">
+                            <i class="bi bi-check-circle"></i> Mark Returned
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i>
+        No active loans at the moment.
+    </div>
+{% endif %}
+
+{% endblock %}

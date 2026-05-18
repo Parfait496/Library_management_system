@@ -72,7 +72,7 @@
 
             <!-- Members can request to borrow -->
             {% if request.user.role == 'MEMBER' and book.is_available %}
-                <a href="#" class="btn btn-success">
+                <a href="{% url 'borrow_request' book.pk %}" class="btn btn-success">
                     <i class="bi bi-bookmark-plus"></i> Request to Borrow
                 </a>
             {% endif %}

@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}Borrow Requests — LibraryMS{% endblock %}
+
+{% block content %}
+
+<h2 class="mb-4">
+    <i class="bi bi-hourglass-split"></i> Borrow Requests
+</h2>
+
+<!-- Pending requests -->
+<h5 class="text-warning mb-3">
+    Pending
+    <span class="badge bg-warning text-dark">{{ pending.count }}</span>
+</h5>
+
+{% if pending %}
+<div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Member</th>
+                <th>Book</th>
+                <th>Requested On</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in pending %}
+            <tr>
+                <td>
+                    <strong>{{ record.member.get_full_name }}</strong>
+                    <br>
+                    <small class="text-muted">{{ record.member.username }}</small>
+                </td>
+                <td>
+                    <strong>{{ record.book.title }}</strong>
+                    <br>
+                    <small class="text-muted">{{ record.book.author }}</small>
+                </td>
+                <td>{{ record.request_date|date:"M d, Y H:i" }}</td>
+                <td>
+                    <a href="{% url 'process_request' record.pk %}"
+                       class="btn btn-sm btn-primary">
+                        <i class="bi bi-check2-square"></i> Process
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+    <div class="alert alert-success">
+        <i class="bi bi-check-circle"></i>
+        No pending requests. All caught up!
+    </div>
+{% endif %}
+
+<hr class="my-4">
+
+<!-- Recently processed -->
+<h5 class="text-secondary mb-3">Recently Processed</h5>
+
+{% if recent %}
+<div class="table-responsive">
+    <table class="table table-sm table-bordered align-middle">
+        <thead class="table-secondary">
+            <tr>
+                <th>Member</th>
+                <th>Book</th>
+                <th>Status</th>
+                <th>Processed By</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in recent %}
+            <tr>
+                <td>{{ record.member.username }}</td>
+                <td>{{ record.book.title }}</td>
+                <td>
+                    {% if record.status == 'APPROVED' %}
+                        <span class="badge bg-info">Approved</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Rejected</span>
+                    {% endif %}
+                </td>
+                <td>{{ record.processed_by.username|default:"—" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}My Fines — LibraryMS{% endblock %}
+
+{% block content %}
+
+<h2 class="mb-4">
+    <i class="bi bi-cash-coin"></i> My Fines
+</h2>
+
+<!-- Total unpaid summary -->
+{% if total_unpaid > 0 %}
+<div class="alert alert-danger d-flex align-items-center mb-4">
+    <i class="bi bi-exclamation-triangle-fill me-2"
+       style="font-size: 1.5rem;"></i>
+    <div>
+        <strong>Outstanding Balance: {{ total_unpaid }} RWF</strong>
+        <br>
+        <small>
+            Please visit the library to settle your outstanding fines.
+        </small>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-success mb-4">
+    <i class="bi bi-check-circle"></i>
+    You have no outstanding fines. Keep it up!
+</div>
+{% endif %}
+
+{% if fines %}
+<div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Book</th>
+                <th>Days Overdue</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Issued</th>
+                <th>Resolved</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for fine in fines %}
+            <tr>
+                <td>
+                    <strong>
+                        {{ fine.borrow_record.book.title }}
+                    </strong>
+                </td>
+                <td>{{ fine.days_overdue }} days</td>
+                <td>
+                    {% if fine.status == 'UNPAID' %}
+                        <span class="text-danger fw-bold">
+                            {{ fine.amount }} RWF
+                        </span>
+                    {% else %}
+                        {{ fine.amount }} RWF
+                    {% endif %}
+                </td>
+                <td>
+                    {% if fine.status == 'UNPAID' %}
+                        <span class="badge bg-danger">Unpaid</span>
+                    {% elif fine.status == 'PAID' %}
+                        <span class="badge bg-success">Paid</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Waived</span>
+                    {% endif %}
+                </td>
+                <td>{{ fine.issued_date|date:"M d, Y" }}</td>
+                <td>
+                    {{ fine.resolved_date|date:"M d, Y"|default:"—" }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+    <div class="alert alert-info">
+        You have no fines on record.
+    </div>
+{% endif %}
+
+{% endblock %}
