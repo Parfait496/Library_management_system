@@ -51,4 +51,7 @@ urlpatterns = [
     path('users/logout/', views.logout_view, name='logout'),
     path('users/profile/', views.profile_view, name='profile'),
     path('dashboard/', views.dashboard_view, name='dashboard'),
+    # Members management — librarians and admins only
+    path('users/members/', views.members_list_view, name='members_list'),
+    path('users/members/<int:pk>/', views.member_detail_view, name='member_detail'),
 ]

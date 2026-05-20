@@ -1,0 +1,64 @@
+version: "3.9"
+
+services:
+
+  # -----------------------------------------------------------------------
+  # DATABASE SERVICE — PostgreSQL
+  # -----------------------------------------------------------------------
+  db:
+    image: postgres:15
+    # restart: unless-stopped means restart automatically
+    # if it crashes, but not if you manually stop it
+    restart: unless-stopped
+    environment:
+      # These create the database and user on first run
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      # Named volume — persists database data between container restarts
+      # Without this, your data would be lost every time you restart
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      # Expose PostgreSQL port so you can connect with pgAdmin or DBeaver
+      # format: host_port:container_port
+      - "5432:5432"
+    # Health check — waits until PostgreSQL is actually ready
+    # before starting the web service
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s   # check every 10 seconds
+      timeout: 5s     # wait max 5 seconds for response
+      retries: 5      # try 5 times before giving up
+
+  # -----------------------------------------------------------------------
+  # WEB SERVICE — Django
+  # -----------------------------------------------------------------------
+  web:
+    # Build from the Dockerfile in the current directory
+    build: .
+    restart: unless-stopped
+    # Load all environment variables from .env file
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount current directory into container
+      # Changes you make locally are reflected immediately
+      - .:/app
+      # Separate volume for media files (uploaded book covers etc.)
+      - media_volume:/app/media
+      # Separate volume for static files
+      - static_volume:/app/staticfiles
+    # web depends on db — Docker starts db first
+    depends_on:
+      db:
+        # Wait until db healthcheck passes before starting web
+        condition: service_healthy
+
+# Named volumes — managed by Docker, persisted between restarts
+volumes:
+  postgres_data:
+  media_volume:
+  static_volume:

@@ -1,135 +1,629 @@
 {% extends 'base.html' %}
-
 {% block title %}Dashboard — LibraryMS{% endblock %}
 
 {% block content %}
 
 <!-- Welcome header -->
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>
-        <i class="bi bi-speedometer2"></i>
-        Welcome, {{ user.first_name|default:user.username }}!
-    </h2>
-    <!-- Show role badge -->
-    {% if is_admin %}
-        <span class="badge bg-danger fs-6">Admin</span>
-    {% elif is_librarian %}
-        <span class="badge bg-warning text-dark fs-6">Librarian</span>
-    {% else %}
-        <span class="badge bg-success fs-6">Member</span>
-    {% endif %}
+    <div>
+        <h2 class="mb-1">
+            Welcome, {{ request.user.first_name|default:request.user.username }}!
+        </h2>
+        <p class="text-muted mb-0">
+            {% if request.user.is_admin %}
+                <i class="bi bi-shield-check text-danger"></i>
+                System Administrator
+            {% elif request.user.is_librarian %}
+                <i class="bi bi-person-badge text-primary"></i>
+                Librarian
+            {% else %}
+                <i class="bi bi-person text-success"></i>
+                Library Member
+            {% endif %}
+        </p>
+    </div>
+    <small class="text-muted">
+        <!-- today's date -->
+        {% now "l, F j, Y" %}
+    </small>
 </div>
+
 
 <!-- ================================================================
      ADMIN DASHBOARD
 ================================================================ -->
-{% if is_admin %}
-<div class="row g-4">
-    <div class="col-md-4">
-        <div class="card text-white bg-primary">
-            <div class="card-body text-center">
-                <i class="bi bi-people fs-1"></i>
-                <h5 class="card-title mt-2">Manage Users</h5>
-                <p class="card-text">View and manage all members</p>
-                <a href="#" class="btn btn-light btn-sm">Go</a>
+{% if request.user.is_admin %}
+
+    <!-- Stat cards row 1 — users and books -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-3">
+            <div class="card text-white bg-primary h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="mb-1 small">Total Users</p>
+                            <!-- real data from context -->
+                            <h3 class="mb-0">{{ total_users }}</h3>
+                            <small>
+                                {{ total_members }} members ·
+                                {{ total_librarians }} librarians
+                            </small>
+                        </div>
+                        <i class="bi bi-people"
+                           style="font-size: 2.5rem; opacity: 0.5;"></i>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card text-white bg-danger">
-            <div class="card-body text-center">
-                <i class="bi bi-book fs-1"></i>
-                <h5 class="card-title mt-2">All Books</h5>
-                <p class="card-text">Full catalogue management</p>
-                <a href="#" class="btn btn-light btn-sm">Go</a>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-success h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="mb-1 small">Books</p>
+                            <h3 class="mb-0">{{ total_books }}</h3>
+                            <small>{{ total_copies }} total copies</small>
+                        </div>
+                        <i class="bi bi-book"
+                           style="font-size: 2.5rem; opacity: 0.5;"></i>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card text-white bg-dark">
-            <div class="card-body text-center">
-                <i class="bi bi-bar-chart fs-1"></i>
-                <h5 class="card-title mt-2">Reports</h5>
-                <p class="card-text">Overdue, fines, activity</p>
-                <a href="#" class="btn btn-light btn-sm">Go</a>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-warning h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="mb-1 small">Active Loans</p>
+                            <h3 class="mb-0">{{ active_loans }}</h3>
+                            <small>
+                                {{ pending_requests }} pending requests
+                            </small>
+                        </div>
+                        <i class="bi bi-clock-history"
+                           style="font-size: 2.5rem; opacity: 0.5;"></i>
+                    </div>
+                </div>
             </div>
         </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-danger h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="mb-1 small">Overdue</p>
+                            <h3 class="mb-0">{{ overdue_loans }}</h3>
+                            <small>
+                                {{ unpaid_fines_count }} unpaid fines ·
+                                {{ unpaid_fines_total }} RWF
+                            </small>
+                        </div>
+                        <i class="bi bi-exclamation-triangle"
+                           style="font-size: 2.5rem; opacity: 0.5;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
-</div>
+
+    <!-- Recent pending requests table -->
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">
+                <i class="bi bi-hourglass-split"></i>
+                Recent Pending Requests
+            </h6>
+            <a href="{% url 'borrow_requests' %}"
+               class="btn btn-sm btn-outline-primary">
+                View All
+            </a>
+        </div>
+        <div class="card-body p-0">
+            {% if recent_requests %}
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Member</th>
+                        <th>Book</th>
+                        <th>Requested</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in recent_requests %}
+                    <tr>
+                        <td>{{ record.member.username }}</td>
+                        <td>{{ record.book.title }}</td>
+                        <td>
+                            {{ record.request_date|date:"M d, Y" }}
+                        </td>
+                        <td>
+                            <a href="{% url 'process_request' record.pk %}"
+                               class="btn btn-sm btn-primary">
+                                Process
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+                <p class="text-muted p-3 mb-0">
+                    No pending requests.
+                </p>
+            {% endif %}
+        </div>
+    </div>
+
 
 <!-- ================================================================
      LIBRARIAN DASHBOARD
 ================================================================ -->
-{% elif is_librarian %}
-<div class="row g-4">
-    <div class="col-md-4">
-        <div class="card text-white bg-success">
-            <div class="card-body text-center">
-                <i class="bi bi-plus-circle fs-1"></i>
-                <h5 class="card-title mt-2">Add Book</h5>
-                <p class="card-text">Add new books to catalogue</p>
-                <a href="#" class="btn btn-light btn-sm">Go</a>
+{% elif request.user.is_librarian %}
+
+    <!-- Stat cards -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-3">
+            <div class="card text-white bg-warning h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="mb-1 small">Pending Requests</p>
+                            <h3 class="mb-0">{{ pending_requests }}</h3>
+                            <small>
+                                {{ approved_requests }} approved
+                            </small>
+                        </div>
+                        <i class="bi bi-hourglass-split"
+                           style="font-size: 2.5rem; opacity: 0.5;"></i>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0">
+                    <a href="{% url 'borrow_requests' %}"
+                       class="btn btn-light btn-sm w-100">
+                        View Requests
+                    </a>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card text-white bg-warning text-dark">
-            <div class="card-body text-center">
-                <i class="bi bi-arrow-left-right fs-1"></i>
-                <h5 class="card-title mt-2">Borrow Requests</h5>
-                <p class="card-text">Approve or reject requests</p>
-                <a href="#" class="btn btn-dark btn-sm">Go</a>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-primary h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="mb-1 small">Active Loans</p>
+                            <h3 class="mb-0">{{ active_loans }}</h3>
+                            <small>books currently out</small>
+                        </div>
+                        <i class="bi bi-book-half"
+                           style="font-size: 2.5rem; opacity: 0.5;"></i>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0">
+                    <a href="{% url 'active_loans' %}"
+                       class="btn btn-light btn-sm w-100">
+                        View Loans
+                    </a>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card text-white bg-info">
-            <div class="card-body text-center">
-                <i class="bi bi-exclamation-triangle fs-1"></i>
-                <h5 class="card-title mt-2">Overdue Books</h5>
-                <p class="card-text">Track overdue and fines</p>
-                <a href="#" class="btn btn-light btn-sm">Go</a>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-danger h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="mb-1 small">Overdue</p>
+                            <h3 class="mb-0">{{ overdue_loans }}</h3>
+                            <small>past due date</small>
+                        </div>
+                        <i class="bi bi-exclamation-triangle"
+                           style="font-size: 2.5rem; opacity: 0.5;"></i>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0">
+                    <a href="{% url 'active_loans' %}"
+                       class="btn btn-light btn-sm w-100">
+                        View Overdue
+                    </a>
+                </div>
             </div>
         </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-success h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="mb-1 small">Total Books</p>
+                            <h3 class="mb-0">{{ total_books }}</h3>
+                            <small>
+                                {{ unpaid_fines_count }} unpaid fines
+                            </small>
+                        </div>
+                        <i class="bi bi-book"
+                           style="font-size: 2.5rem; opacity: 0.5;"></i>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0">
+                    <a href="{% url 'book_list' %}"
+                       class="btn btn-light btn-sm w-100">
+                        View Books
+                    </a>
+                </div>
+            </div>
+        </div>
+
     </div>
-</div>
+
+    <!-- Two column tables -->
+    <div class="row g-3">
+
+        <!-- Pending requests -->
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header d-flex justify-content-between">
+                    <h6 class="mb-0">
+                        <i class="bi bi-hourglass-split"></i>
+                        Pending Requests
+                    </h6>
+                    <a href="{% url 'borrow_requests' %}"
+                       class="btn btn-sm btn-outline-primary">
+                        All
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_pending %}
+                    <table class="table table-hover table-sm mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Member</th>
+                                <th>Book</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in recent_pending %}
+                            <tr>
+                                <td>{{ record.member.username }}</td>
+                                <td>
+                                    <small>{{ record.book.title }}</small>
+                                </td>
+                                <td>
+                                    <a href="{% url 'process_request' record.pk %}"
+                                       class="btn btn-xs btn-primary"
+                                       style="font-size: 0.75rem; padding: 2px 6px;">
+                                        Process
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                        <p class="text-muted p-3 mb-0">No pending requests.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Overdue loans -->
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header d-flex justify-content-between">
+                    <h6 class="mb-0">
+                        <i class="bi bi-exclamation-triangle text-danger"></i>
+                        Overdue Loans
+                    </h6>
+                    <a href="{% url 'active_loans' %}"
+                       class="btn btn-sm btn-outline-danger">
+                        All
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_overdue %}
+                    <table class="table table-hover table-sm mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Member</th>
+                                <th>Book</th>
+                                <th>Due</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in recent_overdue %}
+                            <tr class="table-danger">
+                                <td>{{ record.member.username }}</td>
+                                <td>
+                                    <small>{{ record.book.title }}</small>
+                                </td>
+                                <td>
+                                    <small class="text-danger">
+                                        {{ record.due_date|date:"M d" }}
+                                        <br>
+                                        {{ record.days_overdue }}d overdue
+                                    </small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                        <p class="text-muted p-3 mb-0">
+                            No overdue loans.
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+
 
 <!-- ================================================================
      MEMBER DASHBOARD
 ================================================================ -->
 {% else %}
-<div class="row g-4">
-    <div class="col-md-4">
-        <div class="card text-white bg-primary">
-            <div class="card-body text-center">
-                <i class="bi bi-search fs-1"></i>
-                <h5 class="card-title mt-2">Browse Books</h5>
-                <p class="card-text">Search the catalogue</p>
-                <a href="#" class="btn btn-light btn-sm">Go</a>
-            </div>
+
+    <!-- Fines alert — show prominently if member owes money -->
+    {% if my_fines_total > 0 %}
+    <div class="alert alert-danger d-flex align-items-center mb-4">
+        <i class="bi bi-exclamation-triangle-fill me-2"
+           style="font-size: 1.5rem;"></i>
+        <div>
+            <strong>
+                You have an outstanding fine of {{ my_fines_total }} RWF.
+            </strong>
+            <br>
+            <small>
+                Please visit the library to settle your balance.
+                <a href="{% url 'my_fines' %}" class="alert-link">
+                    View details
+                </a>
+            </small>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card text-white bg-success">
-            <div class="card-body text-center">
-                <i class="bi bi-journal-bookmark fs-1"></i>
-                <h5 class="card-title mt-2">My Borrows</h5>
-                <p class="card-text">View active loans</p>
-                <a href="#" class="btn btn-light btn-sm">Go</a>
+    {% endif %}
+
+    <!-- Stat cards -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-3">
+            <div class="card text-white bg-primary h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="mb-1 small">Active Loans</p>
+                            <h3 class="mb-0">{{ my_active_count }}</h3>
+                            <small>currently borrowed</small>
+                        </div>
+                        <i class="bi bi-book-half"
+                           style="font-size: 2.5rem; opacity: 0.5;"></i>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0">
+                    <a href="{% url 'my_borrows' %}"
+                       class="btn btn-light btn-sm w-100">
+                        View My Books
+                    </a>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card text-white bg-danger">
-            <div class="card-body text-center">
-                <i class="bi bi-cash-coin fs-1"></i>
-                <h5 class="card-title mt-2">My Fines</h5>
-                <p class="card-text">View outstanding fines</p>
-                <a href="#" class="btn btn-light btn-sm">Go</a>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-warning h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="mb-1 small">Pending Requests</p>
+                            <h3 class="mb-0">{{ my_pending }}</h3>
+                            <small>awaiting approval</small>
+                        </div>
+                        <i class="bi bi-hourglass-split"
+                           style="font-size: 2.5rem; opacity: 0.5;"></i>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0">
+                    <a href="{% url 'my_borrows' %}"
+                       class="btn btn-light btn-sm w-100">
+                        View Requests
+                    </a>
+                </div>
             </div>
         </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-success h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="mb-1 small">Total Borrowed</p>
+                            <h3 class="mb-0">{{ my_total_borrowed }}</h3>
+                            <small>books returned</small>
+                        </div>
+                        <i class="bi bi-clock-history"
+                           style="font-size: 2.5rem; opacity: 0.5;"></i>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0">
+                    <a href="{% url 'my_borrows' %}"
+                       class="btn btn-light btn-sm w-100">
+                        View History
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white
+                {% if my_fines_total > 0 %}bg-danger{% else %}bg-secondary{% endif %}
+                h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="mb-1 small">Outstanding Fines</p>
+                            <h3 class="mb-0">{{ my_fines_total }} RWF</h3>
+                            <small>
+                                {% if my_fines_total > 0 %}
+                                    please settle balance
+                                {% else %}
+                                    no outstanding fines
+                                {% endif %}
+                            </small>
+                        </div>
+                        <i class="bi bi-cash-coin"
+                           style="font-size: 2.5rem; opacity: 0.5;"></i>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0">
+                    <a href="{% url 'my_fines' %}"
+                       class="btn btn-light btn-sm w-100">
+                        View Fines
+                    </a>
+                </div>
+            </div>
+        </div>
+
     </div>
-</div>
+
+    <!-- Recent activity table -->
+    <div class="row g-3">
+
+        <!-- Active loans detail -->
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between">
+                    <h6 class="mb-0">
+                        <i class="bi bi-book-half"></i> Current Loans
+                    </h6>
+                    <a href="{% url 'my_borrows' %}"
+                       class="btn btn-sm btn-outline-primary">
+                        All
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    {% if my_active %}
+                    <table class="table table-hover table-sm mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Book</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in my_active %}
+                            <tr
+                              class="{% if record.is_overdue %}table-danger{% endif %}">
+                                <td>
+                                    <small>{{ record.book.title }}</small>
+                                </td>
+                                <td>
+                                    <small>
+                                        {{ record.due_date|date:"M d, Y"|default:"—" }}
+                                    </small>
+                                </td>
+                                <td>
+                                    {% if record.status == 'OVERDUE' %}
+                                        <span class="badge bg-danger">
+                                            Overdue
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-primary">
+                                            Borrowed
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                        <p class="text-muted p-3 mb-0">
+                            No active loans.
+                            <a href="{% url 'book_list' %}">Browse books</a>
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent borrow history -->
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between">
+                    <h6 class="mb-0">
+                        <i class="bi bi-clock-history"></i>
+                        Recent Activity
+                    </h6>
+                    <a href="{% url 'my_borrows' %}"
+                       class="btn btn-sm btn-outline-secondary">
+                        All
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_borrows %}
+                    <table class="table table-hover table-sm mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Book</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in recent_borrows %}
+                            <tr>
+                                <td>
+                                    <small>{{ record.book.title }}</small>
+                                </td>
+                                <td>
+                                    {% if record.status == 'RETURNED' %}
+                                        <span class="badge bg-success">
+                                            Returned
+                                        </span>
+                                    {% elif record.status == 'REQUESTED' %}
+                                        <span class="badge bg-warning text-dark">
+                                            Requested
+                                        </span>
+                                    {% elif record.status == 'REJECTED' %}
+                                        <span class="badge bg-secondary">
+                                            Rejected
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-primary">
+                                            {{ record.status }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small>
+                                        {{ record.created_at|date:"M d, Y" }}
+                                    </small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                        <p class="text-muted p-3 mb-0">
+                            No activity yet.
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+
 {% endif %}
 
 {% endblock %}

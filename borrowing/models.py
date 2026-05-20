@@ -95,7 +95,7 @@ class BorrowRecord(models.Model):
 
     def approve(self, librarian):
 
-        self.status = self.status.APPROVED
+        self.status = self.Status.APPROVED
         self.approved_date = timezone.now()
         self.processed_by = librarian
         self.save()
