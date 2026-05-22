@@ -1,0 +1,106 @@
+# Name of the workflow — shows in GitHub Actions tab
+name: CI/CD Pipeline
+
+# When to trigger this workflow
+on:
+  push:
+    branches: [main]        # runs when you push to main
+  pull_request:
+    branches: [main]        # runs when you open a pull request
+
+jobs:
+
+  # =========================================================================
+  # JOB 1 — RUN TESTS
+  # This job runs your 15 automated tests
+  # =========================================================================
+  test:
+    name: Run Tests
+    # The type of machine to run on — GitHub provides this for free
+    runs-on: ubuntu-latest
+
+    # Services are extra containers that run alongside your job
+    # We need PostgreSQL for the tests to run
+    services:
+      db:
+        image: postgres:15
+        env:
+          POSTGRES_DB: test_library_db
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+        ports:
+          - 5432:5432
+        # Wait until PostgreSQL is healthy before running tests
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    # Environment variables available to all steps in this job
+    env:
+      SECRET_KEY: test-secret-key-for-ci-not-real
+      DEBUG: True
+      DB_NAME: test_library_db
+      DB_USER: test_user
+      DB_PASSWORD: test_password
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DJANGO_SUPERUSER_USERNAME: admin
+      DJANGO_SUPERUSER_EMAIL: admin@test.com
+      DJANGO_SUPERUSER_PASSWORD: Admin123!
+
+    steps:
+      # Step 1 — checkout your code from GitHub
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2 — install Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          # Cache pip packages so they don't download every time
+          # This makes the workflow faster on repeat runs
+          cache: 'pip'
+
+      # Step 3 — install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Step 4 — run migrations
+      # Tests need the database tables to exist
+      - name: Run migrations
+        run: python manage.py migrate
+
+      # Step 5 — run your tests
+      # --verbosity=2 shows each test name as it runs
+      - name: Run tests
+        run: python manage.py test --verbosity=2
+
+  # =========================================================================
+  # JOB 2 — BUILD DOCKER IMAGE
+  # Only runs if tests pass (needs: test)
+  # =========================================================================
+  build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+
+    # This job only starts if the test job passed
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Build the Docker image to verify it builds correctly
+      # We don't push it anywhere — just confirm it builds
+      - name: Build Docker image
+        run: docker build -t library-management-system .
+
+      - name: Confirm build succeeded
+        run: echo "Docker image built successfully"
+
+  
