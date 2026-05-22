@@ -1,0 +1,31 @@
+services:
+  # Web service — runs your Django app
+  - type: web
+    name: library-management-system
+    runtime: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn core.wsgi:application --bind 0.0.0.0:$PORT"
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true   # Render generates a random secret key
+      - key: DEBUG
+        value: False
+      - key: ALLOWED_HOSTS
+        value: .onrender.com
+      - key: DATABASE_URL
+        fromDatabase:
+          name: library-db
+          property: connectionString
+      - key: DJANGO_SUPERUSER_USERNAME
+        value: admin
+      - key: DJANGO_SUPERUSER_EMAIL
+        value: admin@library.com
+      - key: DJANGO_SUPERUSER_PASSWORD
+        generateValue: true   # Render generates a random password
+
+# PostgreSQL database
+databases:
+  - name: library-db
+    databaseName: library_db
+    user: library_user
+    plan: free
