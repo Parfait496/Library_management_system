@@ -2,8 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 
-from rest_framework import generics, permissions
-
+from rest_framework import generics, permissions, status
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from .models import Fine
 from .serializers import FineSerializer
 
@@ -168,3 +169,38 @@ def my_fines_view(request):
         'title': 'My Fines',
     }
     return render(request, 'fines/my_fines.html', context)
+
+class ResolveFineAPIView(APIView):
+    """POST /api/fines/<pk>/resolve/"""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        if request.user.role not in ['LIBRARIAN', 'ADMIN']:
+            return Response(
+                {'detail': 'Access denied.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        fine = get_object_or_404(Fine, pk=pk)
+
+        if fine.is_resolved:
+            return Response(
+                {'detail': 'Fine already resolved.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        action = request.data.get('action')
+        note   = request.data.get('note', '')
+
+        if action == 'paid':
+            fine.mark_paid(resolved_by=request.user)
+        elif action == 'waive':
+            fine.waive(resolved_by=request.user, note=note)
+        else:
+            return Response(
+                {'detail': 'Invalid action. Use paid or waive.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        serializer = FineSerializer(fine)
+        return Response(serializer.data)

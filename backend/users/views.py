@@ -1,39 +1,59 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, logout, authenticate
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-
-from .forms import RegisterForm, LoginForm, UpdateProfileForm
-
-
+# users/views.py
+# Pure API views — no templates, no Django forms
+# All UI is handled by React frontend
 
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 
 from .serializers import (
     UserSerializer,
     RegisterSerializer,
-    ChangePasswordSerializer
+    ChangePasswordSerializer,
 )
 
 User = get_user_model()
 
+
+# ===========================================================================
+# AUTH VIEWS
+# ===========================================================================
+
 class RegisterAPIView(generics.CreateAPIView):
+    """POST /api/auth/register/"""
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
 
+    def perform_create(self, serializer):
+        user = serializer.save()
+        # Send verification email immediately after registration
+        from core.emails import send_verification_email
+        send_verification_email(user)
+
+
 class ProfileAPIView(generics.RetrieveUpdateAPIView):
+    """
+    GET  /api/users/profile/  — get logged in user profile
+    PUT  /api/users/profile/  — update logged in user profile
+    """
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
+        # Always return the currently logged in user
         return self.request.user
-    
+
+
 class ChangePasswordAPIView(APIView):
+    """
+    POST /api/users/change-password/
+    Allows logged in user to change their password.
+    Requires old password for verification.
+    """
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
@@ -42,6 +62,7 @@ class ChangePasswordAPIView(APIView):
         if serializer.is_valid():
             user = request.user
 
+            # Verify old password before allowing change
             if not user.check_password(
                 serializer.validated_data['old_password']
             ):
@@ -49,29 +70,35 @@ class ChangePasswordAPIView(APIView):
                     {"old_password": "Incorrect password."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
+            # Hash and save new password
             user.set_password(serializer.validated_data['new_password'])
             user.save()
 
             return Response(
-                {"message": "Password Changed successfully."},
+                {"message": "Password changed successfully."},
                 status=status.HTTP_200_OK
             )
-        
-        return Response (serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
 
 class LogoutAPIView(APIView):
+    """
+    POST /api/auth/logout/
+    Blacklists the refresh token so it can no longer
+    be used to generate new access tokens.
+    """
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
         try:
             refresh_token = request.data['refresh']
-
             token = RefreshToken(refresh_token)
-
             token.blacklist()
-
             return Response(
                 {"message": "Logged out successfully."},
                 status=status.HTTP_205_RESET_CONTENT
@@ -83,375 +110,209 @@ class LogoutAPIView(APIView):
             )
 
 
-# TEMPLATE VIEWS
+# ===========================================================================
+# MEMBERS MANAGEMENT VIEWS
+# Only accessible by librarians and admins
+# ===========================================================================
 
-def register_view(request):
+class MembersListAPIView(generics.ListAPIView):
+    """
+    GET /api/users/members/
+    Returns paginated list of all MEMBER role users.
+    Supports search via ?search= query param.
+    Only librarians and admins can access.
+    """
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-    if request.user.is_authenticated:
-        return redirect('dashboard')
+    def get_queryset(self):
+        # Block access for non-staff users
+        if self.request.user.role not in ['LIBRARIAN', 'ADMIN']:
+            return User.objects.none()
+
+        queryset = User.objects.filter(
+            role='MEMBER'
+        ).order_by('-date_joined')
+
+        # Optional search filter
+        search = self.request.query_params.get('search', '')
+        if search:
+            queryset = queryset.filter(
+                Q(username__icontains=search) |
+                Q(first_name__icontains=search) |
+                Q(last_name__icontains=search) |
+                Q(email__icontains=search)
+            )
+
+        return queryset
+
+
+class MemberDetailAPIView(generics.RetrieveAPIView):
+    """
+    GET /api/users/members/<pk>/
+    Returns full profile of a single member.
+    Only librarians and admins can access.
+    """
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Block access for non-staff users
+        if self.request.user.role not in ['LIBRARIAN', 'ADMIN']:
+            return User.objects.none()
+
+        # Only return users with MEMBER role
+        return User.objects.filter(role='MEMBER')
     
-    if request.method == 'POST':
-        form = RegisterForm(request.POST)
 
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
+class VerifyEmailAPIView(APIView):
+    """
+    POST /api/auth/verify-email/
+    User submits the 6-digit code from their email.
+    No authentication required — user may not be logged in yet.
+    """
+    permission_classes = [permissions.AllowAny]
 
-            messages.success(request, f'Welcome {user.first_name}! Your account has been created.')
-            return redirect('dashboard')
-        
-        else:
-            messages.error(request, 'Please correct the errors below.')
+    def post(self, request):
+        token = request.data.get('token', '').strip()
 
-    else:
-        form = RegisterForm()
+        if not token:
+            return Response(
+                {'detail': 'Verification code is required.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-    return render(request, 'users/register.html', {'form': form})
+        try:
+            # Find user with this token
+            user = User.objects.get(
+                email_verification_token=token
+            )
 
-def login_view(request):
-    
-    if request.user.is_authenticated:
-        return redirect('dashboard')
+            # Mark email as verified
+            user.email_verified = True
+            user.email_verification_token = None
+            user.save(update_fields=['email_verified', 'email_verification_token'])
 
-    if request.method == 'POST':
-        form = LoginForm(request, data=request.POST)
+            # Send welcome email now that email is verified
+            from core.emails import send_welcome_email
+            send_welcome_email(user)
 
-        if form.is_valid():
-            user = form.get_user()
-            login(request, user)
-            messages.success(request, f'Welcome back, {user.first_name or user.username}!')
+            return Response(
+                {'detail': 'Email verified successfully! You can now log in.'},
+                status=status.HTTP_200_OK
+            )
 
-            next_url = request.GET.get('next', 'dashboard')
-            return redirect(next_url)
-        else:
-            messages.error(request, 'Invalid username or password.')
-
-    else:
-        form = LoginForm()
-
-    return render(request, 'users/login.html', {'form': form})
-
-def logout_view(request):
-    if request.method == 'POST':
-        logout(request)
-        messages.success(request, 'You have been logged out.')
-    return redirect('login')
+        except User.DoesNotExist:
+            return Response(
+                {'detail': 'Invalid verification code.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
-@login_required
-def dashboard_view(request):
+class ResendVerificationAPIView(APIView):
+    """
+    POST /api/auth/resend-verification/
+    Resends the verification email.
+    """
+    permission_classes = [permissions.AllowAny]
 
-    from books.models import Book, Genre
-    from borrowing.models import BorrowRecord
-    from fines.models import Fine
-    from django.utils import timezone
+    def post(self, request):
+        email = request.data.get('email', '').strip()
 
-    user = request.user
-    context = {'title': 'Dashboard'}
+        try:
+            user = User.objects.get(email=email, email_verified=False)
+            from core.emails import send_verification_email
+            send_verification_email(user)
+            return Response(
+                {'detail': 'Verification email resent.'},
+                status=status.HTTP_200_OK
+            )
+        except User.DoesNotExist:
+            # Don't reveal if email exists or not
+            return Response(
+                {'detail': 'If that email exists and is unverified, we sent a code.'},
+                status=status.HTTP_200_OK
+            )
 
-    
-    # ADMIN DASHBOARD DATA
-    
-    if user.is_admin:
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
 
-        # Count all users by role
-        # filter() with keyword arguments queries the database
-        total_users      = User.objects.count()
-        total_members    = User.objects.filter(role='MEMBER').count()
-        total_librarians = User.objects.filter(role='LIBRARIAN').count()
+class ForgotPasswordAPIView(APIView):
+    """
+    POST /api/auth/forgot-password/
+    Sends a password reset code to email.
+    """
+    permission_classes = [permissions.AllowAny]
 
-        # Count books
-        total_books      = Book.objects.count()
-        total_copies     = sum(
-            Book.objects.values_list('total_copies', flat=True)
+    def post(self, request):
+        email = request.data.get('email', '').strip()
+
+        try:
+            user = User.objects.get(email=email, is_active=True)
+
+            # Generate reset token
+            import secrets
+            token = str(secrets.randbelow(900000) + 100000)
+            user.email_verification_token = token
+            user.save(update_fields=['email_verification_token'])
+
+            # Send reset email
+            from django.core.mail import send_mail
+            from django.conf import settings
+            send_mail(
+                subject='Password Reset Code — LibraryMS',
+                message=f"""
+Hi {user.first_name or user.username},
+
+Your password reset code is:
+
+    {token}
+
+Enter this code to reset your password.
+If you did not request this, ignore this email.
+
+Library Team
+                """,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=True,
+            )
+        except User.DoesNotExist:
+            pass  # Don't reveal if email exists
+
+        return Response(
+            {'detail': 'If that email exists, we sent a reset code.'},
+            status=status.HTTP_200_OK
         )
 
-        # Count borrow records by status
-        # Using the Status choices we defined on BorrowRecord
-        pending_requests = BorrowRecord.objects.filter(
-            status=BorrowRecord.Status.REQUESTED
-        ).count()
 
-        active_loans = BorrowRecord.objects.filter(
-            status__in=[
-                BorrowRecord.Status.BORROWED,
-                BorrowRecord.Status.OVERDUE,
-            ]
-        ).count()
+class ResetPasswordAPIView(APIView):
+    """
+    POST /api/auth/reset-password/
+    Resets password using the code.
+    """
+    permission_classes = [permissions.AllowAny]
 
-        # Count overdue records
-        overdue_loans = BorrowRecord.objects.filter(
-            status=BorrowRecord.Status.OVERDUE
-        ).count()
+    def post(self, request):
+        token    = request.data.get('token', '').strip()
+        password = request.data.get('password', '')
 
-        # Count unpaid fines and total amount owed
-        unpaid_fines = Fine.objects.filter(
-            status=Fine.Status.UNPAID
-        )
-        unpaid_fines_count  = unpaid_fines.count()
+        if not token or not password:
+            return Response(
+                {'detail': 'Token and password are required.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        # aggregate() runs SQL SUM — more efficient than Python sum()
-        from django.db.models import Sum
-        unpaid_fines_total = unpaid_fines.aggregate(
-            total=Sum('amount')
-        )['total'] or 0
+        try:
+            user = User.objects.get(email_verification_token=token)
+            user.set_password(password)
+            user.email_verification_token = None
+            user.save()
 
-        # Recent borrow requests (last 5)
-        recent_requests = BorrowRecord.objects.filter(
-            status=BorrowRecord.Status.REQUESTED
-        ).select_related('member', 'book').order_by('-request_date')[:5]
-
-        context.update({
-            'total_users':        total_users,
-            'total_members':      total_members,
-            'total_librarians':   total_librarians,
-            'total_books':        total_books,
-            'total_copies':       total_copies,
-            'pending_requests':   pending_requests,
-            'active_loans':       active_loans,
-            'overdue_loans':      overdue_loans,
-            'unpaid_fines_count': unpaid_fines_count,
-            'unpaid_fines_total': unpaid_fines_total,
-            'recent_requests':    recent_requests,
-        })
-
-    
-    # LIBRARIAN DASHBOARD DATA
-    
-    elif user.is_librarian:
-
-        # Pending requests waiting for librarian action
-        pending_requests = BorrowRecord.objects.filter(
-            status=BorrowRecord.Status.REQUESTED
-        ).count()
-
-        # Approved but not yet picked up
-        approved_requests = BorrowRecord.objects.filter(
-            status=BorrowRecord.Status.APPROVED
-        ).count()
-
-        # Currently borrowed books
-        active_loans = BorrowRecord.objects.filter(
-            status__in=[
-                BorrowRecord.Status.BORROWED,
-                BorrowRecord.Status.OVERDUE,
-            ]
-        ).count()
-
-        # Overdue books
-        overdue_loans = BorrowRecord.objects.filter(
-            status=BorrowRecord.Status.OVERDUE
-        ).count()
-
-        # Total books in catalogue
-        total_books = Book.objects.count()
-
-        # Unpaid fines count
-        unpaid_fines_count = Fine.objects.filter(
-            status=Fine.Status.UNPAID
-        ).count()
-
-        # Most recent 5 pending requests to show in the table
-        recent_pending = BorrowRecord.objects.filter(
-            status=BorrowRecord.Status.REQUESTED
-        ).select_related('member', 'book').order_by('-request_date')[:5]
-
-        # Most recent 5 overdue loans
-        recent_overdue = BorrowRecord.objects.filter(
-            status=BorrowRecord.Status.OVERDUE
-        ).select_related('member', 'book').order_by('due_date')[:5]
-
-        context.update({
-            'pending_requests':   pending_requests,
-            'approved_requests':  approved_requests,
-            'active_loans':       active_loans,
-            'overdue_loans':      overdue_loans,
-            'total_books':        total_books,
-            'unpaid_fines_count': unpaid_fines_count,
-            'recent_pending':     recent_pending,
-            'recent_overdue':     recent_overdue,
-        })
-
-  
-    # MEMBER DASHBOARD DATA
-    
-    else:
-        # Get this member's borrow records
-        my_records = BorrowRecord.objects.filter(
-            member=user
-        ).select_related('book')
-
-        # Active loans (currently borrowed)
-        my_active = my_records.filter(
-            status__in=[
-                BorrowRecord.Status.BORROWED,
-                BorrowRecord.Status.OVERDUE,
-            ]
-        )
-
-        # Pending requests waiting for approval
-        my_pending = my_records.filter(
-            status=BorrowRecord.Status.REQUESTED
-        ).count()
-
-        # Total books borrowed ever
-        my_total_borrowed = my_records.filter(
-            status=BorrowRecord.Status.RETURNED
-        ).count()
-
-        # Overdue books
-        my_overdue = my_records.filter(
-            status=BorrowRecord.Status.OVERDUE
-        )
-
-        # Unpaid fines
-        from fines.models import Fine
-        from django.db.models import Sum
-        my_unpaid_fines = Fine.objects.filter(
-            member=user,
-            status=Fine.Status.UNPAID
-        )
-        my_fines_total = my_unpaid_fines.aggregate(
-            total=Sum('amount')
-        )['total'] or 0
-
-        # Recently borrowed books (last 3) for the dashboard table
-        recent_borrows = my_records.order_by('-created_at')[:3]
-
-        context.update({
-            'my_active':        my_active,
-            'my_active_count':  my_active.count(),
-            'my_pending':       my_pending,
-            'my_total_borrowed': my_total_borrowed,
-            'my_overdue_count': my_overdue.count(),
-            'my_fines_total':   my_fines_total,
-            'recent_borrows':   recent_borrows,
-            'today':            timezone.now().date(),
-        })
-
-    return render(request, 'dashboard.html', context)
-
-@login_required
-def profile_view(request):
-
-    if request.method == 'POST':
-        form = UpdateProfileForm(
-            request.POST,
-            request.FILES,   # request.FILES needed for image uploads
-            instance=request.user
-        )
-
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Profile updated successfully.')
-            return redirect('profile')
-        else:
-            messages.error(request, 'Please correct the errors below.')
-
-    else:
-        form = UpdateProfileForm(instance=request.user)
-
-    return render(request, 'users/profile.html', {'form': form})
-
-@login_required
-def members_list_view(request):
-    
-
-    # Only librarians and admins can access this page
-    if not (request.user.is_librarian or request.user.is_admin):
-        messages.error(request, 'Access denied.')
-        return redirect('dashboard')
-
-    # Get all members
-    members = User.objects.filter(role='MEMBER').order_by('date_joined')
-
-    # Search by username, name, or email
-    search_query = request.GET.get('search', '')
-    if search_query:
-        from django.db.models import Q
-        members = members.filter(
-            Q(username__icontains=search_query) |
-            Q(first_name__icontains=search_query) |
-            Q(last_name__icontains=search_query) |
-            Q(email__icontains=search_query)
-        )
-
-    # Annotate each member with their borrow counts
-    # annotate() adds extra computed fields to each object
-    # Count() counts related objects
-    from django.db.models import Count, Q as DQ
-    from borrowing.models import BorrowRecord
-
-    members = members.annotate(
-        # Total borrow records ever
-        total_borrows=Count('borrow_records'),
-
-        # Active loans count
-        active_borrows=Count(
-            'borrow_records',
-            filter=DQ(borrow_records__status__in=[
-                'BORROWED', 'OVERDUE'
-            ])
-        ),
-
-        # Overdue count
-        overdue_count=Count(
-            'borrow_records',
-            filter=DQ(borrow_records__status='OVERDUE')
-        ),
-    )
-
-    context = {
-        'members': members,
-        'search_query': search_query,
-        'title': 'Members',
-    }
-    return render(request, 'users/members_list.html', context)
-
-
-@login_required
-def member_detail_view(request, pk):
-    
-    if not (request.user.is_librarian or request.user.is_admin):
-        messages.error(request, 'Access denied.')
-        return redirect('dashboard')
-
-    # Get the member — must be a MEMBER role user
-    member = get_object_or_404(User, pk=pk, role='MEMBER')
-
-    # Get their borrow records
-    from borrowing.models import BorrowRecord
-    from fines.models import Fine
-    from django.db.models import Sum
-
-    borrow_records = BorrowRecord.objects.filter(
-        member=member
-    ).select_related('book').order_by('-created_at')
-
-    # Split into active and history
-    active_loans = borrow_records.filter(
-        status__in=['BORROWED', 'OVERDUE', 'APPROVED', 'REQUESTED']
-    )
-    borrow_history = borrow_records.filter(
-        status__in=['RETURNED', 'REJECTED']
-    )
-
-    # Fines summary
-    fines = Fine.objects.filter(member=member)
-    unpaid_fines = fines.filter(status=Fine.Status.UNPAID)
-    total_unpaid = unpaid_fines.aggregate(
-        total=Sum('amount')
-    )['total'] or 0
-
-    context = {
-        'member': member,
-        'active_loans': active_loans,
-        'borrow_history': borrow_history,
-        'fines': fines,
-        'unpaid_fines_count': unpaid_fines.count(),
-        'total_unpaid': total_unpaid,
-        'title': f'Member: {member.username}',
-    }
-    return render(request, 'users/member_detail.html', context)
+            return Response(
+                {'detail': 'Password reset successfully.'},
+                status=status.HTTP_200_OK
+            )
+        except User.DoesNotExist:
+            return Response(
+                {'detail': 'Invalid or expired code.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )

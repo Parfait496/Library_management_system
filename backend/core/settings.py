@@ -5,9 +5,29 @@ from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = config('SECRET_KEY', default='temporary-build-key')
+SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
+
+ALLOWED_HOSTS = config(
+    'ALLOWED_HOSTS',
+    default='localhost,127.0.0.1'
+).split(',')
+
+# Production security headers
+if not DEBUG:
+    SECURE_BROWSER_XSS_FILTER     = True
+    SECURE_CONTENT_TYPE_NOSNIFF   = True
+    X_FRAME_OPTIONS                = 'DENY'
+    SECURE_HSTS_SECONDS            = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD            = True
+
+# CORS — restrict in production
+CORS_ALLOWED_ORIGINS = config(
+    'CORS_ALLOWED_ORIGINS',
+    default='http://localhost:3000'
+).split(',')
+CORS_ALLOW_CREDENTIALS = True
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -74,7 +94,7 @@ else:
             'NAME': config('DB_NAME', default='library_db'),
             'USER': config('DB_USER', default='library_user'),
             'PASSWORD': config('DB_PASSWORD', default='password'),
-            'HOST': config('DB_HOST', default='db'),
+            'HOST': config('DB_HOST'),
             'PORT': config('DB_PORT', default='5432'),
         }
     }
@@ -129,3 +149,20 @@ MEDIA_ROOT = BASE_DIR / 'media'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ===========================================================================
+# EMAIL CONFIGURATION
+# ===========================================================================
+EMAIL_BACKEND = config(
+    'EMAIL_BACKEND',
+    default='django.core.mail.backends.console.EmailBackend'
+    # console backend prints emails to terminal during development
+    # change to smtp in production
+)
+EMAIL_HOST          = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT          = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_USE_TLS       = config('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_HOST_USER     = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL  = config('DEFAULT_FROM_EMAIL', default='Library MS <noreply@library.com>')
+FRONTEND_URL        = config('FRONTEND_URL', default='http://localhost:3000')

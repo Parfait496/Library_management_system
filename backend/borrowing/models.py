@@ -43,7 +43,7 @@ class BorrowRecord(models.Model):
     borrow_date = models.DateTimeField(null=True, blank=True)
 
 
-    due_date = models.DateTimeField(null=True, blank=True)
+    due_date = models.DateField(null=True, blank=True)
 
 
     return_date = models.DateTimeField(null=True, blank=True)
@@ -75,15 +75,18 @@ class BorrowRecord(models.Model):
 
     @property
     def is_overdue(self):
-
         if self.due_date and self.status == self.Status.BORROWED:
-            return timezone.now().date() > self.due_date
+            # Convert due_date to date if it is a datetime object
+            due = self.due_date.date() if hasattr(self.due_date, 'date') else self.due_date
+            return timezone.now().date() > due
         return False
     
+
     @property
     def days_overdue(self):
         if self.is_overdue:
-            delta = timezone.now().date() - self.due_date
+            due = self.due_date.date() if hasattr(self.due_date, 'date') else self.due_date
+            delta = timezone.now().date() - due
             return delta.days
         return 0
     
@@ -107,14 +110,22 @@ class BorrowRecord(models.Model):
         self.save()
 
     def mark_borrowed(self, borrow_days=14):
+        """
+        Called when the member picks up the book.
+        Decreases available_copies on the book.
+        Sets the due date (default: 14 days from today).
+        """
+        from datetime import timedelta
 
         self.status = self.Status.BORROWED
         self.borrow_date = timezone.now()
 
-        from datetime import timedelta
+        # Use date() not datetime for due_date
+        # This prevents the datetime vs date comparison error
         self.due_date = timezone.now().date() + timedelta(days=borrow_days)
         self.save()
 
+    # Decrease available copies
         book = self.book
         if book.available_copies > 0:
             book.available_copies -= 1
@@ -122,22 +133,33 @@ class BorrowRecord(models.Model):
 
     def mark_returned(self):
 
+        
+        """
+        Called when the member returns the book.
+        Increases available_copies on the book.
+        If overdue, creates a fine automatically.
+        """
+        # Save days_overdue BEFORE changing status
+        # because is_overdue checks status == BORROWED
         days = self.days_overdue
+
         self.status = self.Status.RETURNED
         self.return_date = timezone.now()
         self.save()
 
+        # Increase available copies
         book = self.book
         book.available_copies += 1
         book.save()
 
+        # Create fine if overdue
         if days > 0:
             from fines.models import Fine
             Fine.objects.get_or_create(
                 borrow_record=self,
                 defaults={
                     'member': self.member,
-                    'amount': days * 100,  # 100 RWF per day
+                    'amount': days * 100,
                     'days_overdue': days,
                 }
             )

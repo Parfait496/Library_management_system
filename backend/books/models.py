@@ -90,3 +90,42 @@ class Book(models.Model):
         if self.available_copies > 0:
             return f"{self.available_copies} available"
         return "Not available"
+    
+
+class BookSuggestion(models.Model):
+    """
+    Members can suggest books they want the library to acquire.
+    """
+    class Status(models.TextChoices):
+        PENDING   = 'PENDING',   'Pending'
+        REVIEWED  = 'REVIEWED',  'Reviewed'
+        APPROVED  = 'APPROVED',  'Approved'
+        REJECTED  = 'REJECTED',  'Rejected'
+
+    suggested_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='book_suggestions'
+    )
+    title       = models.CharField(max_length=255)
+    author      = models.CharField(max_length=255)
+    isbn        = models.CharField(max_length=13, blank=True, null=True)
+    reason      = models.TextField(
+        blank=True,
+        null=True,
+        help_text='Why should the library get this book?'
+    )
+    status      = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING
+    )
+    admin_note  = models.TextField(blank=True, null=True)
+    created_at  = models.DateTimeField(auto_now_add=True)
+    updated_at  = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.title} — suggested by {self.suggested_by.username}"

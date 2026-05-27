@@ -1,6 +1,7 @@
 from rest_framework import serializers
-from .models import Genre, Book
+from .models import Genre, Book, BookSuggestion
 
+Status = BookSuggestion.Status
 
 class GenreSerializer(serializers.ModelSerializer):
     
@@ -35,6 +36,7 @@ class BookSerializer(serializers.ModelSerializer):
             'total_copies',
             'available_copies',
             'cover_image',
+            'cover_image_url',
             'is_available',
             'availability_status',
             'created_at',
@@ -62,3 +64,29 @@ class BookSerializer(serializers.ModelSerializer):
         # When adding a new book, all copies start as available
         validated_data['available_copies'] = validated_data['total_copies']
         return super().create(validated_data)
+
+    def get_cover_image_url(self, obj):
+        """Returns full URL for cover image"""
+        if obj.cover_image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.cover_image.url)
+            return obj.cover_image.url
+        return None
+
+class BookSuggestionSerializer(serializers.ModelSerializer):
+    suggested_by_username = serializers.CharField(
+        source='suggested_by.username',
+        read_only=True
+    )
+
+    class Meta:
+        model = BookSuggestion
+        fields = (
+            'id', 'suggested_by', 'suggested_by_username',
+            'title', 'author', 'isbn', 'reason',
+            'status', 'admin_note', 'created_at'
+        )
+        read_only_fields = (
+            'suggested_by', 'status', 'admin_note', 'created_at'
+        )

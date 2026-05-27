@@ -65,6 +65,7 @@ export interface Book {
   total_copies: number
   available_copies: number
   cover_image?: string
+  cover_image_url?: string
   is_available: boolean
   availability_status: string
   created_at: string

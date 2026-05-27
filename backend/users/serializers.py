@@ -3,6 +3,7 @@ from django.contrib.auth.password_validation import validate_password
 from .models import User
 
 class UserSerializer(serializers.ModelSerializer):
+    profile_picture_url = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -15,9 +16,19 @@ class UserSerializer(serializers.ModelSerializer):
             'role',
             'phone_number',
             'address',
+            'profile_picture',
+            'profile_picture_url',
             'is_verified',
             'created_at'
         )
+
+    def get_profile_picture_url(self, obj):
+        if obj.profile_picture:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.profile_picture.url)
+            return obj.profile_picture.url
+        return None
 
 class RegisterSerializer(serializers.ModelSerializer):
     
