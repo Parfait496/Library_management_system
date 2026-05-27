@@ -5,8 +5,12 @@ export const getBooksApi = async (params?: {
   search?: string
   genre?: number
   page?: number
+  ordering?: string
+  page_size?: number
 }): Promise<PaginatedResponse<Book>> => {
-  const response = await api.get<PaginatedResponse<Book>>('/books/', { params })
+  const response = await api.get<PaginatedResponse<Book>>(
+    '/books/', { params }
+  )
   return response.data
 }
 
@@ -15,31 +19,49 @@ export const getBookApi = async (id: number): Promise<Book> => {
   return response.data
 }
 
-export const createBookApi = async (data: BookFormData): Promise<Book> => {
+export const createBookApi = async (data: any): Promise<Book> => {
+  // Use FormData to support file uploads
   const formData = new FormData()
+
   Object.entries(data).forEach(([key, value]) => {
-    if (value !== undefined && value !== null) {
-      formData.append(key, value as string | Blob)
+    if (value !== undefined && value !== null && value !== '') {
+      if (value instanceof File) {
+        formData.append(key, value)
+      } else {
+        formData.append(key, String(value))
+      }
     }
   })
+
   const response = await api.post<Book>('/books/', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+    headers: {
+      // Let browser set Content-Type with boundary automatically
+      'Content-Type': 'multipart/form-data',
+    },
   })
   return response.data
 }
 
 export const updateBookApi = async (
   id: number,
-  data: Partial<BookFormData>
+  data: any
 ): Promise<Book> => {
   const formData = new FormData()
+
   Object.entries(data).forEach(([key, value]) => {
-    if (value !== undefined && value !== null) {
-      formData.append(key, value as string | Blob)
+    if (value !== undefined && value !== null && value !== '') {
+      if (value instanceof File) {
+        formData.append(key, value)
+      } else {
+        formData.append(key, String(value))
+      }
     }
   })
+
   const response = await api.patch<Book>(`/books/${id}/`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
   })
   return response.data
 }
@@ -48,10 +70,8 @@ export const deleteBookApi = async (id: number): Promise<void> => {
   await api.delete(`/books/${id}/`)
 }
 
-// Genres — returns array directly (not paginated)
 export const getGenresApi = async (): Promise<Genre[]> => {
   const response = await api.get('/genres/')
-  // Handle both paginated and non-paginated responses
   const data = response.data
   if (Array.isArray(data)) return data
   if (data.results) return data.results
@@ -63,14 +83,4 @@ export const createGenreApi = async (
 ): Promise<Genre> => {
   const response = await api.post<Genre>('/genres/', data)
   return response.data
-}
-
-export const getRecentBooksApi = async (
-  limit: number = 6
-): Promise<Book[]> => {
-  const response = await api.get<PaginatedResponse<Book>>('/books/', {
-    params: { ordering: '-created_at', page_size: limit }
-  })
-  const data = response.data
-  return data.results || []
 }

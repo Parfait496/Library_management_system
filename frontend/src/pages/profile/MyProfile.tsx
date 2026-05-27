@@ -40,31 +40,52 @@ const MyProfile: React.FC = () => {
     }
   }
 
-  const handleProfileSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
-    setSuccess(null)
+ const handleProfileSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
+  setLoading(true)
+  setError(null)
+  setSuccess(null)
 
-    try {
-      const formData = new FormData()
-      Object.entries(profileData).forEach(([k, v]) => {
-        formData.append(k, v)
-      })
-      if (avatarFile) {
-        formData.append('profile_picture', avatarFile)
-      }
+  try {
+    const formData = new FormData()
 
-      await api.patch('/users/profile/', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      })
-      setSuccess('Profile updated successfully!')
-    } catch (err: any) {
-      setError('Failed to update profile.')
-    } finally {
-      setLoading(false)
+    // Append text fields
+    formData.append('first_name', profileData.first_name)
+    formData.append('last_name',  profileData.last_name)
+    formData.append('email',      profileData.email)
+    if (profileData.phone_number) {
+      formData.append('phone_number', profileData.phone_number)
     }
+    if (profileData.address) {
+      formData.append('address', profileData.address)
+    }
+
+    // Append image file if selected
+    if (avatarFile) {
+      formData.append('profile_picture', avatarFile)
+    }
+
+    await api.patch('/users/profile/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+
+    setSuccess('Profile updated successfully!')
+    // Refresh avatar
+    if (avatarFile) {
+      setAvatarPreview(URL.createObjectURL(avatarFile))
+    }
+  } catch (err: any) {
+    const data = err.response?.data
+    if (data && typeof data === 'object') {
+      const msg = Object.values(data).flat().join(', ')
+      setError(msg)
+    } else {
+      setError('Failed to update profile.')
+    }
+  } finally {
+    setLoading(false)
   }
+}
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

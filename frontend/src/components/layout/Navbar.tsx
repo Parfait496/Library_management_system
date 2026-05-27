@@ -181,23 +181,22 @@ const Navbar: React.FC = () => {
                 className="flex items-center gap-2 px-3 py-2 rounded-lg
                            hover:bg-gray-100 transition-colors duration-150"
               >
-                {/* Avatar circle with initials */}
-                <div className="w-8 h-8 rounded-full bg-blue-600
-                                flex items-center justify-center text-white
-                                text-sm font-semibold">
-                  {user?.first_name?.[0] || user?.username?.[0] || 'U'}
-                </div>
-
-                <div className="text-left">
-                  <p className="text-sm font-medium text-gray-900 leading-none">
-                    {user?.first_name || user?.username}
-                  </p>
-                  {badge && (
-                    <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${badge.color}`}>
-                      {badge.label}
-                    </span>
-                  )}
-                </div>
+                {/* Avatar — show profile picture or initials */}
+<div className="w-8 h-8 rounded-full bg-blue-600
+                flex items-center justify-center
+                overflow-hidden flex-shrink-0">
+  {(user as any)?.profile_picture_url ? (
+    <img
+      src={(user as any).profile_picture_url}
+      alt="Profile"
+      className="w-full h-full object-cover"
+    />
+  ) : (
+    <span className="text-white text-sm font-semibold">
+      {user?.first_name?.[0] || user?.username?.[0] || 'U'}
+    </span>
+  )}
+</div>
 
                 <ChevronDown className="w-4 h-4 text-gray-400" />
               </button>

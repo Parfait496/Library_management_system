@@ -148,12 +148,17 @@ const BookCard: React.FC<BookCardProps> = ({ book, onClick }) => (
                hover:shadow-md transition-shadow duration-200"
   >
     <div className="h-48 bg-gradient-to-br from-blue-100 to-blue-200
-                    flex items-center justify-center">
-      {book.cover_image ? (
+                    flex items-center justify-center overflow-hidden">
+      {/* Use cover_image_url (full URL) not cover_image (relative path) */}
+      {(book as any).cover_image_url ? (
         <img
-          src={book.cover_image}
+          src={(book as any).cover_image_url}
           alt={book.title}
           className="h-full w-full object-cover"
+          onError={(e) => {
+            // If image fails to load show placeholder
+            (e.target as HTMLImageElement).style.display = 'none'
+          }}
         />
       ) : (
         <BookOpen className="w-16 h-16 text-blue-400" />
@@ -165,7 +170,6 @@ const BookCard: React.FC<BookCardProps> = ({ book, onClick }) => (
         {book.title}
       </h3>
       <p className="text-sm text-gray-500 mb-3">by {book.author}</p>
-
       <div className="flex items-center justify-between flex-wrap gap-1">
         {book.genre_name && (
           <Badge variant="info">{book.genre_name}</Badge>

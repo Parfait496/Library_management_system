@@ -111,19 +111,23 @@ const BookDetail: React.FC = () => {
 
         {/* Left — cover image */}
         <div className="md:col-span-1">
-          <div className="aspect-[3/4] bg-gradient-to-br from-blue-100
-                          to-blue-200 rounded-xl flex items-center
-                          justify-center overflow-hidden">
-            {book.cover_image ? (
-              <img
-                src={book.cover_image}
-                alt={book.title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <BookOpen className="w-24 h-24 text-blue-400" />
-            )}
-          </div>
+          {/* Book cover */}
+<div className="aspect-[3/4] bg-gradient-to-br from-blue-100
+                to-blue-200 rounded-xl flex items-center
+                justify-center overflow-hidden">
+  {(book as any).cover_image_url ? (
+    <img
+      src={(book as any).cover_image_url}
+      alt={book.title}
+      className="w-full h-full object-cover"
+      onError={(e) => {
+        (e.target as HTMLImageElement).style.display = 'none'
+      }}
+    />
+  ) : (
+    <BookOpen className="w-24 h-24 text-blue-400" />
+  )}
+</div>
 
           {/* Action buttons */}
           <div className="mt-4 flex flex-col gap-2">

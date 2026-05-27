@@ -39,7 +39,10 @@ export interface User {
   phone_number?: string
   address?: string
   is_verified: boolean
+  email_verified?: boolean
   created_at: string
+  profile_picture?: string
+  profile_picture_url?: string    
 }
 
 // ==========================================================================

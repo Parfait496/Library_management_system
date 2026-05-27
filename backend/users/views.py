@@ -1,7 +1,7 @@
 # users/views.py
 # Pure API views — no templates, no Django forms
 # All UI is handled by React frontend
-
+from rest_framework import parsers
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -36,16 +36,22 @@ class RegisterAPIView(generics.CreateAPIView):
 
 
 class ProfileAPIView(generics.RetrieveUpdateAPIView):
-    """
-    GET  /api/users/profile/  — get logged in user profile
-    PUT  /api/users/profile/  — update logged in user profile
-    """
-    serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    """GET/PATCH /api/users/profile/"""
+    serializer_class    = UserSerializer
+    permission_classes  = [permissions.IsAuthenticated]
+    parser_classes      = [
+        parsers.MultiPartParser,
+        parsers.FormParser,
+        parsers.JSONParser,
+    ]
 
     def get_object(self):
-        # Always return the currently logged in user
         return self.request.user
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
 
 
 class ChangePasswordAPIView(APIView):
