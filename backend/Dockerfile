@@ -16,12 +16,10 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 
 COPY . .
 
-# Create staticfiles directory so collectstatic has somewhere to go
-RUN mkdir -p /app/staticfiles
+RUN mkdir -p /app/staticfiles /app/media
 
-# Run collectstatic during build so files are ready
 RUN python manage.py collectstatic --noinput || true
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn core.wsgi:application --bind 0.0.0.0:${PORT:-8000} --timeout 120 --workers 1"]
+CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn core.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 2 --timeout 120"]
