@@ -14,6 +14,13 @@ ALLOWED_HOSTS = config(
     default='localhost,127.0.0.1'
 ).split(',')
 
+# Always allow Railway's healthcheck hostname
+ALLOWED_HOSTS += [
+    'healthcheck.railway.app',
+    '.railway.app',
+    '.up.railway.app',
+]
+
 # Production security headers
 if not DEBUG:
     SECURE_BROWSER_XSS_FILTER     = True
@@ -149,7 +156,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 os.makedirs(MEDIA_ROOT, exist_ok=True)
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
