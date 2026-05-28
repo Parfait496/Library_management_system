@@ -17,12 +17,6 @@ COPY . .
 
 RUN mkdir -p /app/staticfiles /app/media
 
-# Provide dummy SECRET_KEY just for collectstatic build step
-# Real SECRET_KEY comes from Railway environment at runtime
-RUN SECRET_KEY=dummy-build-key-not-used-in-production \
-    DATABASE_URL=sqlite:////tmp/build.db \
-    python manage.py collectstatic --noinput
-
 EXPOSE 8000
 
-CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn core.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --timeout 120"]
+CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn core.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --timeout 120"]
