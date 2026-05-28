@@ -33,41 +33,49 @@ const Register: React.FC = () => {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setFieldErrors({})
+  e.preventDefault()
+  setError(null)
+  setFieldErrors({})
 
-    // Basic client-side validation
-    if (formData.password !== formData.password2) {
-      setFieldErrors({ password2: 'Passwords do not match.' })
+  if (formData.password !== formData.password2) {
+    setFieldErrors({ password2: 'Passwords do not match.' })
+    return
+  }
+
+  setLoading(true)
+
+  try {
+    await registerApi(formData)
+    navigate('/verify-email', {
+      state: { email: formData.email }
+    })
+  } catch (err: any) {
+    const data = err.response?.data
+
+    if (!err.response) {
+      setError('Cannot connect to server. Please check your connection.')
       return
     }
 
-    setLoading(true)
-
-    try {
-      await registerApi(formData)
-      // After successful registration redirect to verify page
-      navigate('/verify-email', {
-      state: { email: formData.email }
+    if (data && typeof data === 'object') {
+      const errors: Record<string, string> = {}
+      Object.entries(data).forEach(([key, value]) => {
+        errors[key] = Array.isArray(value)
+          ? value[0]
+          : String(value)
       })
-    } catch (err: any) {
-      const data = err.response?.data
+      setFieldErrors(errors)
 
-      if (data && typeof data === 'object') {
-        // Extract field-level errors from Django response
-        const errors: Record<string, string> = {}
-        Object.entries(data).forEach(([key, value]) => {
-          errors[key] = Array.isArray(value) ? value[0] : String(value)
-        })
-        setFieldErrors(errors)
-      } else {
-        setError('Registration failed. Please try again.')
-      }
-    } finally {
-      setLoading(false)
+      // Show first error as main error message
+      const firstError = Object.values(errors)[0]
+      if (firstError) setError(firstError)
+    } else {
+      setError('Registration failed. Please try again.')
     }
+  } finally {
+    setLoading(false)
   }
+}
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center

@@ -21,21 +21,35 @@ const Login: React.FC = () => {
   const [error, setError]             = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setLoading(true)
-    try {
-      await login({ username, password })
-      navigate(from, { replace: true })
-    } catch (err: any) {
-      setError(
-        err.response?.data?.detail ||
-        'Invalid username or password.'
-      )
-    } finally {
-      setLoading(false)
+  e.preventDefault()
+  setError(null)
+  setLoading(true)
+
+  try {
+    await login({ username, password })
+    navigate(from, { replace: true })
+  } catch (err: any) {
+    // Handle different error types
+    if (err.response?.status === 401) {
+      setError('Invalid username or password. Please try again.')
+    } else if (err.response?.status === 400) {
+      const data = err.response.data
+      if (data.detail) {
+        setError(data.detail)
+      } else if (data.non_field_errors) {
+        setError(data.non_field_errors[0])
+      } else {
+        setError('Invalid credentials.')
+      }
+    } else if (err.response?.status === 0 || !err.response) {
+      setError('Cannot connect to server. Please check your connection.')
+    } else {
+      setError('Something went wrong. Please try again.')
     }
+  } finally {
+    setLoading(false)
   }
+}
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center

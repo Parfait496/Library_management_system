@@ -31,11 +31,41 @@ if not DEBUG:
     SECURE_HSTS_PRELOAD            = True
 
 # CORS — restrict in production
+# CORS — who can call our API
 CORS_ALLOWED_ORIGINS = config(
     'CORS_ALLOWED_ORIGINS',
     default='http://localhost:3000'
 ).split(',')
+
+# Also allow all subdomains of netlify and railway
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r'^https://.*\.netlify\.app$',
+    r'^https://.*\.railway\.app$',
+    r'^https://.*\.up\.railway\.app$',
+]
+
 CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
