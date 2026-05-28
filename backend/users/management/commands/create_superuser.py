@@ -6,17 +6,11 @@ User = get_user_model()
 
 
 class Command(BaseCommand):
-    """
-    Custom management command to create a superuser
-    from environment variables.
-    Called in build.sh during deployment.
-    Usage: python manage.py create_superuser
-    """
     help = 'Create superuser from environment variables'
 
     def handle(self, *args, **options):
         username = config('DJANGO_SUPERUSER_USERNAME', default='admin')
-        email = config('DJANGO_SUPERUSER_EMAIL', default='admin@library.com')
+        email    = config('DJANGO_SUPERUSER_EMAIL', default='admin@library.com')
         password = config('DJANGO_SUPERUSER_PASSWORD', default='Admin123!')
 
         if not User.objects.filter(username=username).exists():
@@ -24,7 +18,8 @@ class Command(BaseCommand):
                 username=username,
                 email=email,
                 password=password,
-                role='ADMIN'
+                role='ADMIN',
+                email_verified=True,
             )
             self.stdout.write(
                 self.style.SUCCESS(f'Superuser {username} created.')
