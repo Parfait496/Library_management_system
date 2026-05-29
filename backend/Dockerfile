@@ -5,7 +5,10 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y libpq-dev gcc && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
 RUN pip install --upgrade pip && pip install -r requirements.txt
@@ -16,4 +19,4 @@ RUN mkdir -p /app/staticfiles /app/media
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py collectstatic --noinput && python manage.py create_admin && gunicorn core.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 1 --timeout 120"]
+CMD ["sh", "-c", "python manage.py collectstatic --noinput --clear && python manage.py migrate --noinput && python manage.py create_superuser && gunicorn core.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 1 --timeout 120"]

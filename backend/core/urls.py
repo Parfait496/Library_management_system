@@ -17,4 +17,9 @@ urlpatterns = [
     path('api/', include('books.urls')),
     path('api/', include('borrowing.urls')),
     path('api/', include('fines.urls')),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]  
+
+urlpatterns += static(
+    settings.MEDIA_URL,
+    document_root=settings.MEDIA_ROOT
+)

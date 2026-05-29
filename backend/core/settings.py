@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'whitenoise.runserver_nostatic',
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
@@ -187,12 +188,18 @@ USE_TZ        = True
 # ===========================================================================
 # STATIC AND MEDIA FILES
 # ===========================================================================
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_URL  = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+
+
+STATICFILES_DIRS = []
+
 MEDIA_URL   = '/media/'
 MEDIA_ROOT  = BASE_DIR / 'media'
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 os.makedirs(MEDIA_ROOT, exist_ok=True)
 
