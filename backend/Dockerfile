@@ -19,4 +19,4 @@ RUN mkdir -p /app/staticfiles /app/media
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "python manage.py collectstatic --noinput --clear && python manage.py migrate --noinput && python manage.py create_superuser && gunicorn core.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 1 --timeout 120"]
+CMD ["sh", "-c", "python manage.py collectstatic --noinput --clear && python manage.py migrate --noinput && python manage.py create_superuser && gunicorn core.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 1 --timeout 120 --log-level info"]
