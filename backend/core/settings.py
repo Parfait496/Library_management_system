@@ -6,22 +6,33 @@ import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = config('SECRET_KEY', default='dummy-key-change-in-production')
+# ===========================================================================
+# SECURITY
+# ===========================================================================
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-this')
 DEBUG      = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = config(
-    'ALLOWED_HOSTS',
-    default='localhost,127.0.0.1'
-).split(',')
-
-# Always allow Railway hosts
-ALLOWED_HOSTS += [
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '.librarymanagementsystem-production-7ecf.up.railway.app',
+    '.libraryms-780009.netlify.app',
     'healthcheck.railway.app',
-    '.railway.app',
-    '.up.railway.app',
-    '*',  # temporary — remove after confirming working
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://librarymanagementsystem-production-7ecf.up.railway.app",
+    "https://libraryms-780009.netlify.app",
+]
+
+# Add any extra hosts from env
+EXTRA_HOSTS = config('ALLOWED_HOSTS', default='')
+if EXTRA_HOSTS:
+    ALLOWED_HOSTS += EXTRA_HOSTS.split(',')
+
+# ===========================================================================
+# APPLICATIONS
+# ===========================================================================
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -39,6 +50,9 @@ INSTALLED_APPS = [
     'fines',
 ]
 
+# ===========================================================================
+# MIDDLEWARE
+# ===========================================================================
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -51,8 +65,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF      = 'core.urls'
-WSGI_APPLICATION  = 'core.wsgi.application'
+ROOT_URLCONF     = 'core.urls'
+WSGI_APPLICATION = 'core.wsgi.application'
 
 TEMPLATES = [
     {
@@ -80,7 +94,6 @@ if DATABASE_URL:
         'default': dj_database_url.parse(
             DATABASE_URL,
             conn_max_age=600,
-            ssl_require=True,
         )
     }
 else:
@@ -95,8 +108,21 @@ else:
         }
     }
 
+# ===========================================================================
+# AUTH
+# ===========================================================================
 AUTH_USER_MODEL = 'users.User'
 
+AUTH_PASSWORD_VALIDATORS = [
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+]
+
+# ===========================================================================
+# REST FRAMEWORK
+# ===========================================================================
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -118,19 +144,8 @@ SIMPLE_JWT = {
 # ===========================================================================
 # CORS
 # ===========================================================================
-CORS_ALLOWED_ORIGINS = config(
-    'CORS_ALLOWED_ORIGINS',
-    default='http://localhost:3000'
-).split(',')
-
-CORS_ALLOWED_ORIGIN_REGEXES = [
-    r'^https://.*\.netlify\.app$',
-    r'^https://.*\.railway\.app$',
-    r'^https://.*\.up\.railway\.app$',
-]
-
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_ALL_ORIGINS = True  # temporary — remove after confirming working
+CORS_ALLOW_ALL_ORIGINS   = True
+CORS_ALLOW_CREDENTIALS   = True
 
 CORS_ALLOW_HEADERS = [
     'accept',
@@ -152,25 +167,18 @@ CORS_ALLOW_METHODS = [
 # ===========================================================================
 # EMAIL
 # ===========================================================================
-EMAIL_BACKEND       = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
-EMAIL_HOST          = config('EMAIL_HOST',     default='smtp.gmail.com')
-EMAIL_PORT          = config('EMAIL_PORT',     default=587, cast=int)
-EMAIL_USE_TLS       = config('EMAIL_USE_TLS',  default=True, cast=bool)
+EMAIL_BACKEND       = config('EMAIL_BACKEND',       default='django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST          = config('EMAIL_HOST',          default='smtp.gmail.com')
+EMAIL_PORT          = config('EMAIL_PORT',          default=587, cast=int)
+EMAIL_USE_TLS       = config('EMAIL_USE_TLS',       default=True, cast=bool)
 EMAIL_HOST_USER     = config('EMAIL_HOST_USER',     default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL  = config('DEFAULT_FROM_EMAIL',  default='LibraryMS <noreply@library.com>')
-FRONTEND_URL        = config('FRONTEND_URL', default='http://localhost:3000')
+FRONTEND_URL        = config('FRONTEND_URL',        default='http://localhost:3000')
 
 # ===========================================================================
-# PASSWORD VALIDATORS
+# INTERNATIONALIZATION
 # ===========================================================================
-AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
-]
-
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE     = 'Africa/Kigali'
 USE_I18N      = True
@@ -186,19 +194,9 @@ MEDIA_ROOT  = BASE_DIR / 'media'
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
-# Create media directory
 os.makedirs(MEDIA_ROOT, exist_ok=True)
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# ===========================================================================
-# MESSAGES
-# ===========================================================================
-from django.contrib.messages import constants as messages
-MESSAGE_TAGS = {
-    messages.DEBUG:   'secondary',
-    messages.INFO:    'info',
-    messages.SUCCESS: 'success',
-    messages.WARNING: 'warning',
-    messages.ERROR:   'danger',
-}
+
+
