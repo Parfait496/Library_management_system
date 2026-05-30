@@ -41,7 +41,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'whitenoise.runserver_nostatic',
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
@@ -188,26 +187,28 @@ USE_I18N      = True
 USE_TZ        = True
 
 # ===========================================================================
-# STATIC AND MEDIA FILES
+# STATIC FILES
 # ===========================================================================
 STATIC_URL  = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+STATICFILES_DIRS = []
 
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 ]
 
+# Use ManifestStaticFilesStorage with whitenoise
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
+MEDIA_URL  = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
-STATICFILES_DIRS = []
 
-MEDIA_URL   = '/media/'
-MEDIA_ROOT  = BASE_DIR / 'media'
+os.makedirs(str(MEDIA_ROOT), exist_ok=True)
+os.makedirs(str(BASE_DIR / 'staticfiles'), exist_ok=True)
 
-os.makedirs(MEDIA_ROOT, exist_ok=True)
-os.makedirs(BASE_DIR / 'staticfiles', exist_ok=True)
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
