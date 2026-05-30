@@ -200,12 +200,12 @@ STATICFILES_FINDERS = [
 ]
 
 # Use ManifestStaticFilesStorage with whitenoise
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL  = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-
+import os
 os.makedirs(str(MEDIA_ROOT), exist_ok=True)
 os.makedirs(str(BASE_DIR / 'staticfiles'), exist_ok=True)
 
