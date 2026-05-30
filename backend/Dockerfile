@@ -24,8 +24,8 @@ CMD ["sh", "-c", "\
     python manage.py collectstatic --noinput --clear && \
     echo '== Running migrations ==' && \
     python manage.py migrate --noinput && \
-    echo '== Creating superuser ==' && \
-    python manage.py create_superuser && \
+    # echo '== Creating superuser ==' && \
+    # python manage.py create_superuser && \
     echo '== Starting server ==' && \
     gunicorn core.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --timeout 120 \
     "]
