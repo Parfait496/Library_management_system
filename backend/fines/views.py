@@ -1,41 +1,61 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
+# fines/views.py — API views only, 
 
 from rest_framework import generics, permissions, status
-from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
+from django.db.models import Sum
+
 from .models import Fine
 from .serializers import FineSerializer
 
 
-# ===========================================================================
-# API VIEWS (return JSON)
-# ===========================================================================
+class IsLibrarianOrAdmin(permissions.BasePermission):
+    """Only librarians and admins can access"""
+    def has_permission(self, request, view):
+        return (
+            request.user.is_authenticated and
+            request.user.role in ['LIBRARIAN', 'ADMIN']
+        )
+
 
 class FineListAPIView(generics.ListAPIView):
     """
     GET /api/fines/
-    Librarians/admins see all fines.
+    Librarians and admins see all fines.
     Members see only their own fines.
+    Supports ?status=UNPAID filter.
     """
-    serializer_class = FineSerializer
+    serializer_class   = FineSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        """Filter fines based on user role"""
-        user = self.request.user
-        if user.role in ['LIBRARIAN', 'ADMIN']:
-            return Fine.objects.all().select_related('member', 'borrow_record')
+        user    = self.request.user
+        queryset = Fine.objects.select_related(
+            'member',
+            'borrow_record',
+            'borrow_record__book'
+        ).order_by('-issued_date')
+
         # Members only see their own fines
-        return Fine.objects.filter(
-            member=user
-        ).select_related('member', 'borrow_record')
+        if user.role not in ['LIBRARIAN', 'ADMIN']:
+            queryset = queryset.filter(member=user)
+
+        # Filter by status if provided — e.g. ?status=UNPAID
+        status_filter = self.request.query_params.get('status', None)
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+
+        return queryset
 
 
 class FineDetailAPIView(generics.RetrieveAPIView):
-    """GET /api/fines/<id>/ — get a single fine"""
-    serializer_class = FineSerializer
+    """
+    GET /api/fines/<pk>/
+    Get a single fine.
+    Members can only see their own fines.
+    """
+    serializer_class   = FineSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
@@ -45,162 +65,70 @@ class FineDetailAPIView(generics.RetrieveAPIView):
         return Fine.objects.filter(member=user)
 
 
-# ===========================================================================
-# TEMPLATE VIEWS (return HTML)
-# ===========================================================================
-
-@login_required
-def fines_list_view(request):
-    """
-    GET /fines/
-    Librarians and admins see all fines.
-    Members see only their own fines.
-    """
-    user = request.user
-
-    if user.is_librarian or user.is_admin:
-        # Librarians see all fines grouped by status
-        unpaid = Fine.objects.filter(
-            status=Fine.Status.UNPAID
-        ).select_related('member', 'borrow_record__book')
-
-        resolved = Fine.objects.filter(
-            status__in=[Fine.Status.PAID, Fine.Status.WAIVED]
-        ).select_related('member', 'borrow_record__book').order_by(
-            '-resolved_date'
-        )[:20]  # only show last 20 resolved fines
-
-        context = {
-            'unpaid': unpaid,
-            'resolved': resolved,
-            'title': 'Fines Management',
-            'is_staff': True,
-        }
-    else:
-        # Members see only their own fines
-        my_fines = Fine.objects.filter(
-            member=user
-        ).select_related('borrow_record__book')
-
-        context = {
-            'my_fines': my_fines,
-            'title': 'My Fines',
-            'is_staff': False,
-        }
-
-    return render(request, 'fines/fines_list.html', context)
-
-
-@login_required
-def resolve_fine_view(request, pk):
-    """
-    GET  /fines/<pk>/resolve/  — show resolve form
-    POST /fines/<pk>/resolve/  — mark fine as paid or waived
-
-    Only librarians and admins can resolve fines.
-    """
-    if not (request.user.is_librarian or request.user.is_admin):
-        messages.error(request, 'Access denied.')
-        return redirect('dashboard')
-
-    fine = get_object_or_404(Fine, pk=pk)
-
-    # Cannot resolve an already resolved fine
-    if fine.is_resolved:
-        messages.warning(request, 'This fine has already been resolved.')
-        return redirect('fines_list')
-
-    if request.method == 'POST':
-        # Get the action from the submitted form
-        action = request.POST.get('action')
-        note = request.POST.get('note', '')
-
-        if action == 'paid':
-            fine.mark_paid(resolved_by=request.user)
-            messages.success(
-                request,
-                f'Fine of {fine.amount} RWF marked as paid for '
-                f'{fine.member.username}.'
-            )
-        elif action == 'waive':
-            fine.waive(resolved_by=request.user, note=note)
-            messages.success(
-                request,
-                f'Fine of {fine.amount} RWF waived for '
-                f'{fine.member.username}.'
-            )
-        else:
-            messages.error(request, 'Invalid action.')
-            return redirect('resolve_fine', pk=pk)
-
-        return redirect('fines_list')
-
-    context = {
-        'fine': fine,
-        'title': f'Resolve Fine — {fine.member.username}',
-    }
-    return render(request, 'fines/resolve_fine.html', context)
-
-
-@login_required
-def my_fines_view(request):
-    """
-    GET /fines/my-fines/
-    Shortcut for members to see their own fines.
-    Redirects librarians/admins to the full fines list.
-    """
-    if request.user.is_librarian or request.user.is_admin:
-        return redirect('fines_list')
-
-    fines = Fine.objects.filter(
-        member=request.user
-    ).select_related('borrow_record__book').order_by('-issued_date')
-
-    # Calculate total unpaid amount
-    # Using Python sum() on a queryset
-    total_unpaid = sum(
-        f.amount for f in fines
-        if f.status == Fine.Status.UNPAID
-    )
-
-    context = {
-        'fines': fines,
-        'total_unpaid': total_unpaid,
-        'title': 'My Fines',
-    }
-    return render(request, 'fines/my_fines.html', context)
-
 class ResolveFineAPIView(APIView):
-    """POST /api/fines/<pk>/resolve/"""
-    permission_classes = [permissions.IsAuthenticated]
+    """
+    POST /api/fines/<pk>/resolve/
+    Librarian marks fine as paid or waives it.
+
+    Request body:
+    {
+        "action": "paid" or "waive",
+        "note": "optional note"
+    }
+    """
+    permission_classes = [IsLibrarianOrAdmin]
 
     def post(self, request, pk):
-        if request.user.role not in ['LIBRARIAN', 'ADMIN']:
-            return Response(
-                {'detail': 'Access denied.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        fine   = get_object_or_404(Fine, pk=pk)
+        action = request.data.get('action', '')
+        note   = request.data.get('note', '')
 
-        fine = get_object_or_404(Fine, pk=pk)
-
+        # Cannot resolve an already resolved fine
         if fine.is_resolved:
             return Response(
-                {'detail': 'Fine already resolved.'},
+                {'detail': 'This fine is already resolved.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
-        action = request.data.get('action')
-        note   = request.data.get('note', '')
 
         if action == 'paid':
             fine.mark_paid(resolved_by=request.user)
-        elif action == 'waive':
-            fine.waive(resolved_by=request.user, note=note)
-        else:
             return Response(
-                {'detail': 'Invalid action. Use paid or waive.'},
-                status=status.HTTP_400_BAD_REQUEST
+                FineSerializer(fine).data,
+                status=status.HTTP_200_OK
             )
 
-        serializer = FineSerializer(fine)
-        return Response(serializer.data)
+        elif action == 'waive':
+            fine.waive(resolved_by=request.user, note=note)
+            return Response(
+                FineSerializer(fine).data,
+                status=status.HTTP_200_OK
+            )
+
+        return Response(
+            {'detail': 'Invalid action. Use "paid" or "waive".'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+class MyFinesSummaryAPIView(APIView):
+    """
+    GET /api/fines/summary/
+    Returns total unpaid fines for the logged in member.
+    Used by dashboard to show outstanding balance.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        unpaid = Fine.objects.filter(
+            member=request.user,
+            status=Fine.Status.UNPAID
+        )
+        total = unpaid.aggregate(
+            total=Sum('amount')
+        )['total'] or 0
+
+        return Response({
+            'unpaid_count':  unpaid.count(),
+            'unpaid_total':  float(total),
+            'currency':      'RWF',
+        })

@@ -4,23 +4,20 @@ from .models import Fine
 
 @admin.register(Fine)
 class FineAdmin(admin.ModelAdmin):
-    # Columns in the list view
     list_display = (
-        'member', 'amount', 'days_overdue',
-        'status', 'issued_date', 'resolved_date'
+        'member', 'book_title', 'amount',
+        'days_overdue', 'status', 'issued_date'
     )
-
-    # Filter sidebar
-    list_filter = ('status', 'issued_date')
-
-    # Search bar
+    list_filter  = ('status', 'issued_date')
     search_fields = (
         'member__username',
         'borrow_record__book__title'
     )
+    readonly_fields = ('issued_date', 'resolved_date')
 
-    # Make status editable directly in list
-    list_editable = ('status',)
-
-    # These are set automatically
-    readonly_fields = ('issued_date', 'resolved_date', 'resolved_by')
+    def book_title(self, obj):
+        try:
+            return obj.borrow_record.book.title
+        except Exception:
+            return 'Unknown'
+    book_title.short_description = 'Book'

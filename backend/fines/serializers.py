@@ -5,27 +5,18 @@ from .models import Fine
 class FineSerializer(serializers.ModelSerializer):
     """
     Serializer for Fine model.
-    Used in API responses.
+    Includes computed fields and related book title.
     """
-
-    # Show member username instead of just ID
     member_username = serializers.CharField(
         source='member.username',
         read_only=True
     )
-
-    # Show book title from the related borrow record
-    book_title = serializers.CharField(
-        source='borrow_record.book.title',
-        read_only=True
-    )
-
-    # Computed properties
-    is_paid = serializers.SerializerMethodField()
+    book_title = serializers.SerializerMethodField()
+    is_paid    = serializers.SerializerMethodField()
     is_resolved = serializers.SerializerMethodField()
 
     class Meta:
-        model = Fine
+        model  = Fine
         fields = (
             'id',
             'borrow_record',
@@ -42,11 +33,17 @@ class FineSerializer(serializers.ModelSerializer):
             'is_paid',
             'is_resolved',
         )
-        # All fields are managed by the system
         read_only_fields = (
             'member', 'amount', 'days_overdue',
-            'issued_date', 'resolved_date', 'resolved_by'
+            'issued_date', 'resolved_date', 'resolved_by',
         )
+
+    def get_book_title(self, obj):
+        """Get book title from the related borrow record"""
+        try:
+            return obj.borrow_record.book.title
+        except Exception:
+            return 'Unknown'
 
     def get_is_paid(self, obj):
         return obj.is_paid
