@@ -11,7 +11,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY
 # ===========================================================================
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-this')
-DEBUG      = config('DEBUG', default=False, cast=bool)
+# DEBUG      = config('DEBUG', default=False, cast=bool)
+DEBUG = True
 
 ALLOWED_HOSTS = [
     'localhost',
@@ -200,7 +201,7 @@ STATICFILES_FINDERS = [
 ]
 
 # Use ManifestStaticFilesStorage with whitenoise
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL  = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
