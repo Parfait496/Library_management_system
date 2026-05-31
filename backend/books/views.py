@@ -3,8 +3,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q  # Q lets us do OR queries in Django ORM
 
-from rest_framework import generics, permissions, filters
+from rest_framework import generics, permissions, filters, status
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .models import Book, Genre, BookSuggestion
 from .serializers import BookSerializer, GenreSerializer, BookSuggestionSerializer
