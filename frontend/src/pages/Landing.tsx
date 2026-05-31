@@ -537,7 +537,7 @@ const Landing: React.FC = () => {
                 {
                   icon: <Mail className="w-5 h-5" />,
                   label: 'Email',
-                  value: 'ndizihiwep@asome.health',
+                  value: 'parfaitndizihiwe@gmail.com',
                 },
                 {
                   icon: <MapPin className="w-5 h-5" />,
@@ -660,7 +660,7 @@ const Landing: React.FC = () => {
               <p className="text-gray-500 text-xs mt-1">
                 Designed & developed by{' '}
                 <span className="text-blue-400 font-medium">
-                  Medical Student Parfait Ndizihiwe
+                  Parfait Ndizihiwe
                 </span>
               </p>
             </div>
