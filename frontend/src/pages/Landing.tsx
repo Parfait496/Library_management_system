@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import {
   BookOpen, Users, Clock, Shield,
   ArrowRight, CheckCircle, ChevronDown,
-  Mail, MapPin, Github, ArrowLeft,
+  Mail, MapPin, ArrowLeft,
 } from 'lucide-react'
 
 const Landing: React.FC = () => {
@@ -595,8 +595,8 @@ const Landing: React.FC = () => {
                            text-gray-400 hover:text-white
                            text-sm transition-colors"
               >
-                <Github className="w-4 h-4" />
-                View on GitHub
+                {/* <Github className="w-4 h-4" />
+                View on GitHub */}
               </a>
             </div>
 
@@ -671,7 +671,7 @@ const Landing: React.FC = () => {
               className="flex items-center gap-2 text-gray-500
                          hover:text-white transition-colors text-sm"
             >
-              <Github className="w-4 h-4" />
+              {/* <Github className="w-4 h-4" /> */}
               GitHub
             </a>
           </div>
