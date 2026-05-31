@@ -1,10 +1,11 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { BookOpen } from 'lucide-react'
+import { BookOpen, ArrowLeft } from 'lucide-react'
 import { registerApi } from '../../api/auth'
 import Input from '../../components/ui/Input'
 import Button from '../../components/ui/Button'
 import Alert from '../../components/ui/Alert'
+
 
 const Register: React.FC = () => {
   const navigate = useNavigate()
@@ -81,6 +82,18 @@ const Register: React.FC = () => {
     <div className="min-h-screen bg-gray-50 flex items-center
                     justify-center px-4 py-8">
       <div className="w-full max-w-md">
+
+        <div className="mb-4">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 text-sm
+                     text-gray-500 hover:text-gray-700
+                     transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to home
+        </Link>
+      </div>
 
         {/* Logo */}
         <div className="text-center mb-8">

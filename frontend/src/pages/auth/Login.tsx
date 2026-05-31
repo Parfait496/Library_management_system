@@ -5,6 +5,7 @@ import useAuth from '../../hooks/useAuth'
 import Input from '../../components/ui/Input'
 import Button from '../../components/ui/Button'
 import Alert from '../../components/ui/Alert'
+import { ArrowLeft } from 'lucide-react'
 
 const Login: React.FC = () => {
   const { login } = useAuth()
@@ -55,6 +56,19 @@ const Login: React.FC = () => {
     <div className="min-h-screen bg-gray-50 flex items-center
                     justify-center px-4">
       <div className="w-full max-w-md">
+
+        {/* Back to home */}
+      <div className="mb-4">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 text-sm
+                     text-gray-500 hover:text-gray-700
+                     transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to home
+        </Link>
+      </div>
 
         {/* Logo */}
         <div className="text-center mb-8">
