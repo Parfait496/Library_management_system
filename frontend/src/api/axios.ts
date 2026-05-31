@@ -1,22 +1,22 @@
-import axios from 'axios'
+import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios'
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY } from '../utils/constants'
 
-// This reads REACT_APP_API_URL from .env
-// In production this is set in Netlify environment variables
-const API_BASE_URL =
-  process.env.REACT_APP_API_URL || 'http://localhost:8000/api'
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api'
 
-console.log('API URL:', API_BASE_URL) // temporary debug log
+// Log URL so we can debug in browser console
+console.log('🔗 API URL:', API_BASE_URL)
 
-const api = axios.create({
+const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  // Important for CORS
+  withCredentials: false,
 })
 
 api.interceptors.request.use(
-  (config) => {
+  (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem(ACCESS_TOKEN_KEY)
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
