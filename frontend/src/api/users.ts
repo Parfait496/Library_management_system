@@ -37,3 +37,12 @@ export const changePasswordApi = async (data: {
 }): Promise<void> => {
   await api.post('/users/change-password/', data)
 }
+
+export const joinLibraryApi = async (
+  joinCode: string
+): Promise<any> => {
+  const response = await api.post('/libraries/join/', {
+    join_code: joinCode
+  })
+  return response.data
+}

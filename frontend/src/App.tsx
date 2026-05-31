@@ -25,6 +25,9 @@ import MembersList from './pages/members/MembersList'
 import MemberDetail from './pages/members/MemberDetail'
 import MyProfile from './pages/profile/MyProfile'
 import NotFound from './pages/NotFound'
+import BookImport from './pages/books/BookImport'
+
+
 
 const App: React.FC = () => {
   return (
@@ -70,6 +73,7 @@ const App: React.FC = () => {
               <Route path="/members"          element={<MembersList />} />
               <Route path="/members/:id"      element={<MemberDetail />} />
               <Route path="/genres"           element={<GenreManagement />} />
+              <Route path="/books/import" element={<BookImport />} />
             </Route>
 
           </Route>

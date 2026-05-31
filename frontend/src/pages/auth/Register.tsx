@@ -19,7 +19,7 @@ const Register: React.FC = () => {
     password2:    '',
     phone_number: '',
   })
-
+  const [joinCode, setJoinCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -120,6 +120,28 @@ const Register: React.FC = () => {
               />
             </div>
           )}
+
+       
+
+
+
+<div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    Library Join Code
+    <span className="text-gray-400 font-normal ml-1">(optional)</span>
+  </label>
+  <input
+    type="text"
+    value={joinCode}
+    onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+    placeholder="Enter your library's join code"
+    className="input-field"
+    maxLength={10}
+  />
+  <p className="text-xs text-gray-500 mt-1">
+    Ask your librarian for the join code
+  </p>
+</div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
 

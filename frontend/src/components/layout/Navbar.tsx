@@ -15,6 +15,7 @@ import {
   ChevronDown,
   Tag,
   Lightbulb,
+  Upload
 } from 'lucide-react'
 import useAuth from '../../hooks/useAuth'
 
@@ -116,6 +117,11 @@ const Navbar: React.FC = () => {
       label: 'Suggestions',
       path: '/suggestions',
       icon: <Lightbulb className="w-4 h-4" />,
+    },
+    {
+      label: 'Import Books',
+      path:  '/books/import',
+      icon:  <Upload className="w-4 h-4" />,
     },
   ]
 
