@@ -153,3 +153,101 @@ class BookSuggestionDetailAPIView(generics.RetrieveUpdateAPIView):
             )
         kwargs['partial'] = True
         return self.update(request, *args, **kwargs)
+    
+
+
+import csv
+import io
+from rest_framework.parsers import MultiPartParser
+
+class BookCSVImportAPIView(APIView):
+    """
+    POST /api/books/import-csv/
+    Librarians and admins can upload a CSV file to import books.
+
+    CSV format:
+    isbn,title,author,publisher,year,genre,description,copies
+    9780743273565,The Great Gatsby,F. Scott Fitzgerald,Scribner,1925,Fiction,,3
+    """
+    permission_classes = [IsLibrarianOrAdmin]
+    parser_classes     = [MultiPartParser]
+
+    def post(self, request):
+        csv_file = request.FILES.get('file')
+
+        if not csv_file:
+            return Response(
+                {'detail': 'No file uploaded. Send file as "file" field.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not csv_file.name.endswith('.csv'):
+            return Response(
+                {'detail': 'File must be a CSV file.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Read CSV
+        try:
+            decoded = csv_file.read().decode('utf-8')
+            reader  = csv.DictReader(io.StringIO(decoded))
+        except Exception as e:
+            return Response(
+                {'detail': f'Could not read CSV file: {str(e)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        created = 0
+        skipped = 0
+        row_errors = []
+
+        for i, row in enumerate(reader, start=2):
+            try:
+                # Get genre
+                genre = None
+                if row.get('genre', '').strip():
+                    genre, _ = Genre.objects.get_or_create(
+                        name=row['genre'].strip()
+                    )
+
+                isbn = row.get('isbn', '').strip()
+
+                # Skip duplicates
+                if isbn and Book.objects.filter(isbn=isbn).exists():
+                    skipped += 1
+                    continue
+
+                title  = row.get('title', '').strip()
+                author = row.get('author', '').strip()
+
+                if not title or not author:
+                    row_errors.append(
+                        f'Row {i}: title and author are required'
+                    )
+                    continue
+
+                copies = int(row.get('copies', 1)) if row.get('copies') else 1
+
+                Book.objects.create(
+                    isbn=isbn or f'AUTO-{i}',
+                    title=title,
+                    author=author,
+                    publisher=row.get('publisher', '').strip(),
+                    publication_year=int(row['year']) if row.get('year', '').strip() else None,
+                    genre=genre,
+                    description=row.get('description', '').strip(),
+                    total_copies=copies,
+                    available_copies=copies,
+                    added_by=request.user,
+                )
+                created += 1
+
+            except Exception as e:
+                row_errors.append(f'Row {i}: {str(e)}')
+
+        return Response({
+            'message': f'Import complete. Created: {created}, Skipped: {skipped}',
+            'created':  created,
+            'skipped':  skipped,
+            'errors':   row_errors,
+        })

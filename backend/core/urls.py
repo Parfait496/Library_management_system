@@ -17,6 +17,7 @@ urlpatterns = [
     path('api/', include('books.urls')),
     path('api/', include('borrowing.urls')),
     path('api/', include('fines.urls')),
+    path('api/', include('libraries.urls')),
 ]  
 
 urlpatterns += static(

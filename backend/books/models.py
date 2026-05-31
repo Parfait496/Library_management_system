@@ -11,6 +11,14 @@ class Genre(models.Model):
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    library = models.ForeignKey(
+    'libraries.Library',
+    on_delete=models.CASCADE,
+    related_name='genres',
+    null=True,
+    blank=True
+)
+
     class Meta:
         
         ordering = ['name']
@@ -20,6 +28,8 @@ class Genre(models.Model):
 
 
 class Book(models.Model):
+
+
     
     isbn = models.CharField(max_length=13, unique=True)
     title = models.CharField(max_length=255)
@@ -30,6 +40,14 @@ class Book(models.Model):
         null=True,
         validators=[MinValueValidator(1000)]
     )
+
+    library = models.ForeignKey(
+    'libraries.Library',
+    on_delete=models.CASCADE,
+    related_name='books',
+    null=True,
+    blank=True
+)
 
     
     genre = models.ForeignKey(
