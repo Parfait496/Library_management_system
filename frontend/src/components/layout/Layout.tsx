@@ -32,7 +32,7 @@ const Layout: React.FC = () => {
               © {new Date().getFullYear()} LibraryMS.
               Developed by{' '}
               <span className="font-medium text-blue-600">
-                Medical Student Parfait Ndizihiwe
+                Parfait Ndizihiwe
               </span>
             </p>
             <p className="text-xs text-gray-400">
