@@ -587,17 +587,7 @@ const Landing: React.FC = () => {
                 A modern library management system for institutions
                 that want to manage books and members digitally.
               </p>
-              <a
-                href="https://github.com/Parfait496/Library_management_system"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 mt-4
-                           text-gray-400 hover:text-white
-                           text-sm transition-colors"
-              >
-                <ExternalLink className="w-4 h-4" />
-                View on GitHub
-              </a>
+              
             </div>
 
             {/* Quick links */}
@@ -624,28 +614,7 @@ const Landing: React.FC = () => {
               </ul>
             </div>
 
-            {/* Tech stack */}
-            <div>
-              <h4 className="font-semibold mb-4">Built With</h4>
-              <ul className="space-y-2">
-                {[
-                  'Django REST Framework',
-                  'React + TypeScript',
-                  'Tailwind CSS',
-                  'PostgreSQL',
-                  'Docker',
-                  'Railway + Netlify',
-                ].map((tech, i) => (
-                  <li key={i}
-                      className="flex items-center gap-2 text-sm
-                                 text-gray-400">
-                    <div className="w-1.5 h-1.5 bg-blue-500
-                                    rounded-full flex-shrink-0" />
-                    {tech}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            
           </div>
 
           {/* Bottom bar */}
