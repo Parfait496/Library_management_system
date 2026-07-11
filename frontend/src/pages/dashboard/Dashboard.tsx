@@ -19,7 +19,7 @@ import { getBorrowRecordsApi } from '../../api/borrowing'
 import { getFinesApi } from '../../api/fines'
 import { getMembersApi } from '../../api/users'
 import { formatDate, formatAmount } from '../../utils/helpers'
-import { Book, BorrowRecord, Fine, User } from '../../types'
+import { Book, BorrowRecord } from '../../types'
 
 // ============================================================
 // Types for dashboard stats
@@ -62,93 +62,90 @@ const Dashboard: React.FC = () => {
   const [recentBooks, setRecentBooks]   = useState<Book[]>([])
 
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true)
-      try {
+  const loadData = async () => {
+    setLoading(true)
+    try {
 
-        if (isAdmin || isLibrarian) {
-          // --------------------------------------------------------
-          // Load all data for staff dashboard
-          // Promise.all runs all requests in parallel — faster
-          // --------------------------------------------------------
-          const [booksRes, membersRes, borrowsRes, finesRes] =
-            await Promise.all([
-              getBooksApi(),
-              getMembersApi(),
-              getBorrowRecordsApi(),
-              getFinesApi({ status: 'UNPAID' }),
-            ])
-
-          const borrows = borrowsRes.results
-          const fines   = finesRes.results
-
-          // Calculate stats from the fetched data
-          const active  = borrows.filter(b =>
-            ['BORROWED', 'OVERDUE'].includes(b.status)
-          )
-          const pending = borrows.filter(b => b.status === 'REQUESTED')
-          const overdue = borrows.filter(b => b.status === 'OVERDUE')
-
-          const finesTotal = fines.reduce(
-            (sum, f) => sum + Number(f.amount), 0
-          )
-
-          setAdminStats({
-            totalBooks:       booksRes.count,
-            totalMembers:     membersRes.count,
-            activeLoans:      active.length,
-            pendingRequests:  pending.length,
-            overdueLoans:     overdue.length,
-            unpaidFines:      fines.length,
-            unpaidFinesTotal: finesTotal,
-          })
-
-          // Show 5 most recent pending requests in table
-          setRecentRequests(pending.slice(0, 5))
-
-        } else if (isMember) {
-          // --------------------------------------------------------
-          // Load member's own data
-          // --------------------------------------------------------
-          const [borrowsRes, finesRes, booksRes] = await Promise.all([
+      if (isAdmin || isLibrarian) {
+        const [booksRes, membersRes, borrowsRes, finesRes] =
+          await Promise.all([
+            getBooksApi(),
+            getMembersApi(),
             getBorrowRecordsApi(),
             getFinesApi({ status: 'UNPAID' }),
-            getBooksApi({ ordering: '-created_at', page_size: 6 } as any),
           ])
 
-          const borrows = borrowsRes.results
-          const fines   = finesRes.results
+        // Use full results array for counting
+        const allBorrows = borrowsRes.results
 
-          const active  = borrows.filter(b =>
-            ['BORROWED', 'OVERDUE'].includes(b.status)
-          )
-          const pending = borrows.filter(b => b.status === 'REQUESTED')
-          const finesTotal = fines.reduce(
-            (sum, f) => sum + Number(f.amount), 0
-          )
+        // Count each status separately
+        const pending  = allBorrows.filter(
+          b => b.status === 'REQUESTED'
+        )
+        const approved = allBorrows.filter(
+          b => b.status === 'APPROVED'
+        )
+        const active   = allBorrows.filter(
+          b => ['BORROWED', 'OVERDUE'].includes(b.status)
+        )
+        const overdue  = allBorrows.filter(
+          b => b.status === 'OVERDUE'
+        )
 
-          setMemberStats({
-            myActiveLoans:  active.length,
-            myPendingLoans: pending.length,
-            myFinesTotal:   finesTotal,
-          })
+        const finesTotal = finesRes.results.reduce(
+          (sum, f) => sum + Number(f.amount), 0
+        )
 
-          // Show 5 recent borrows in table
-          setMyBorrows(borrows.slice(0, 5))
+        setAdminStats({
+          totalBooks:       booksRes.count,
+          totalMembers:     membersRes.count,
+          activeLoans:      active.length,
+          pendingRequests:  pending.length,
+          overdueLoans:     overdue.length,
+          unpaidFines:      finesRes.count,
+          unpaidFinesTotal: finesTotal,
+        })
 
-          // Recent books added to library
-          setRecentBooks(booksRes.results.slice(0, 6))
-        }
+        // Show pending requests in table
+        setRecentRequests(pending.slice(0, 5))
 
-      } catch (err) {
-        console.error('Dashboard load error:', err)
-      } finally {
-        setLoading(false)
+      } else if (isMember) {
+        const [borrowsRes, finesRes, booksRes] = await Promise.all([
+          getBorrowRecordsApi(),
+          getFinesApi({ status: 'UNPAID' }),
+          getBooksApi(),
+        ])
+
+        const borrows = borrowsRes.results
+        const active  = borrows.filter(
+          b => ['BORROWED', 'OVERDUE'].includes(b.status)
+        )
+        const pending = borrows.filter(
+          b => b.status === 'REQUESTED'
+        )
+        const finesTotal = finesRes.results.reduce(
+          (sum, f) => sum + Number(f.amount), 0
+        )
+
+        setMemberStats({
+          myActiveLoans:  active.length,
+          myPendingLoans: pending.length,
+          myFinesTotal:   finesTotal,
+        })
+
+        setMyBorrows(borrows.slice(0, 5))
+        setRecentBooks(booksRes.results.slice(0, 6))
       }
-    }
 
-    loadData()
-  }, [isAdmin, isLibrarian, isMember])
+    } catch (err) {
+      console.error('Dashboard load error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  loadData()
+}, [isAdmin, isLibrarian, isMember])
 
   if (loading) return <Spinner fullScreen />
 

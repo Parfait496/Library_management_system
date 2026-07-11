@@ -19,6 +19,7 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     '.librarymanagementsystem-production-7ecf.up.railway.app',
     '.libraryms-780009.netlify.app',
+    '.onrender.com',
     'healthcheck.railway.app',
 ]
 
@@ -136,7 +137,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_PAGINATION_CLASS': 'core.pagination.StandardPagination',
     'PAGE_SIZE': 10,
 }
 
@@ -152,6 +153,13 @@ SIMPLE_JWT = {
 # ===========================================================================
 CORS_ALLOW_ALL_ORIGINS   = True
 CORS_ALLOW_CREDENTIALS   = True
+
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r'^https://.*\.vercel\.app$',       # ← Vercel
+    r'^https://.*\.onrender\.com$',     # ← Render
+    r'^https://.*\.netlify\.app$',
+    r'^http://localhost:\d+$',
+]
 
 CORS_ALLOW_HEADERS = [
     'accept',
@@ -187,28 +195,33 @@ FRONTEND_URL        = config('FRONTEND_URL',        default='http://localhost:30
 
 
 # ===========================================================================
-# CLOUDINARY — Cloud image storage
-# Images uploaded here survive Railway redeployments
+# MEDIA FILES
 # ===========================================================================
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
+CLOUDINARY_CLOUD_NAME = config('CLOUDINARY_CLOUD_NAME', default='')
 
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME', default=''),
-    'API_KEY':    config('CLOUDINARY_API_KEY', default=''),
-    'API_SECRET': config('CLOUDINARY_API_SECRET', default=''),
-}
+if CLOUDINARY_CLOUD_NAME:
+    # Production — use Cloudinary
+    import cloudinary
+    import cloudinary.uploader
+    import cloudinary.api
 
-# Use Cloudinary for media files if configured
-# Falls back to local storage for development
-if config('CLOUDINARY_CLOUD_NAME', default=''):
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': CLOUDINARY_CLOUD_NAME,
+        'API_KEY':    config('CLOUDINARY_API_KEY', default=''),
+        'API_SECRET': config('CLOUDINARY_API_SECRET', default=''),
+    }
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-    MEDIA_URL = f"https://res.cloudinary.com/{config('CLOUDINARY_CLOUD_NAME', default='')}/"
+    MEDIA_URL = f'https://res.cloudinary.com/{CLOUDINARY_CLOUD_NAME}/'
+    MEDIA_ROOT = BASE_DIR / 'media'
+
 else:
+    # Local development — serve from local filesystem
     DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
     MEDIA_URL  = '/media/'
     MEDIA_ROOT = BASE_DIR / 'media'
+
+import os
+os.makedirs(str(BASE_DIR / 'media'), exist_ok=True)
 
 
 # ===========================================================================

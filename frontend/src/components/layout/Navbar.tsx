@@ -15,7 +15,8 @@ import {
   ChevronDown,
   Tag,
   Lightbulb,
-  Upload
+  Upload,
+  Building2,
 } from 'lucide-react'
 import useAuth from '../../hooks/useAuth'
 
@@ -123,23 +124,26 @@ const Navbar: React.FC = () => {
       path:  '/books/import',
       icon:  <Upload className="w-4 h-4" />,
     },
+    
   ]
+
+  const adminLinks: NavLink[] = [
+  {
+    label: 'Libraries',
+    path:  '/admin/libraries',
+    icon:  <Building2 className="w-4 h-4" />,
+  },
+]
 
   // Combine links based on role
   const navLinks: NavLink[] = [
-    ...commonLinks,
-    ...(isMember ? memberLinks : []),
-    ...(isLibrarian || isAdmin ? staffLinks : []),
-  ]
+  ...commonLinks,
+  ...(isMember ? memberLinks : []),
+  ...(isLibrarian || isAdmin ? staffLinks : []),
+  ...(isAdmin ? adminLinks : []),
+]
 
-  // Role badge color and label
-  const roleBadge = {
-    ADMIN:     { label: 'Admin',     color: 'bg-red-100 text-red-700' },
-    LIBRARIAN: { label: 'Librarian', color: 'bg-blue-100 text-blue-700' },
-    MEMBER:    { label: 'Member',    color: 'bg-green-100 text-green-700' },
-  }
 
-  const badge = user ? roleBadge[user.role] : null
 
   // =========================================================================
   // RENDER

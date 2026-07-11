@@ -14,7 +14,7 @@ export const loginApi = async (
 
 // Register — creates new account
 export const registerApi = async (
-  data: RegisterData
+  data: any
 ): Promise<User> => {
   const response = await api.post<User>('/auth/register/', data)
   return response.data

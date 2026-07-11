@@ -11,7 +11,7 @@ export const getFinesApi = async (params?: {
 }): Promise<PaginatedResponse<Fine>> => {
   const response = await api.get<PaginatedResponse<Fine>>(
     '/fines/',
-    { params }
+    { params: { page_size: 500, ...params } }
   )
   return response.data
 }

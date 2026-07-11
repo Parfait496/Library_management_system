@@ -8,10 +8,12 @@ import { BorrowRecord, PaginatedResponse } from '../types'
 export const getBorrowRecordsApi = async (params?: {
   status?: string
   page?: number
+  page_size?: number
 }): Promise<PaginatedResponse<BorrowRecord>> => {
+  // Fetch large page size to get all records for counting
   const response = await api.get<PaginatedResponse<BorrowRecord>>(
     '/borrowing/',
-    { params }
+    { params: { page_size: 500, ...params } }
   )
   return response.data
 }

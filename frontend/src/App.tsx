@@ -1,5 +1,5 @@
 import React from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
 import ProtectedRoute from './components/routing/ProtectedRoute'
 import PublicRoute from './components/routing/PublicRoute'
@@ -26,6 +26,8 @@ import MemberDetail from './pages/members/MemberDetail'
 import MyProfile from './pages/profile/MyProfile'
 import NotFound from './pages/NotFound'
 import BookImport from './pages/books/BookImport'
+
+import LibraryManagement from './pages/admin/LibraryManagement'
 
 
 
@@ -74,6 +76,11 @@ const App: React.FC = () => {
               <Route path="/members/:id"      element={<MemberDetail />} />
               <Route path="/genres"           element={<GenreManagement />} />
               <Route path="/books/import" element={<BookImport />} />
+            </Route>
+
+            {/* Inside Admin only routes section */} 
+            <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
+              <Route path="/admin/libraries" element={<LibraryManagement />} />
             </Route>
 
           </Route>

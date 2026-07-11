@@ -99,3 +99,18 @@ class LibraryAdminAPIView(generics.ListCreateAPIView):
             from rest_framework.exceptions import PermissionDenied
             raise PermissionDenied('Only admins can create libraries.')
         serializer.save()
+
+
+class LibraryAdminDetailAPIView(generics.RetrieveUpdateAPIView):
+    """
+    GET   /api/libraries/admin/<id>/
+    PATCH /api/libraries/admin/<id>/
+    Admin only.
+    """
+    serializer_class   = LibrarySerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        if self.request.user.role != 'ADMIN':
+            return Library.objects.none()
+        return Library.objects.all()

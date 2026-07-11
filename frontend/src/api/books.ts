@@ -1,5 +1,5 @@
 import api from './axios'
-import { Book, Genre, BookFormData, PaginatedResponse } from '../types'
+import { Book, Genre, PaginatedResponse } from '../types'
 
 export const getBooksApi = async (params?: {
   search?: string

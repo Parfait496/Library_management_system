@@ -2,13 +2,14 @@ from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
+
 from .models import BorrowRecord
 from .serializers import BorrowRecordSerializer
 from books.models import Book
+from core.mixins import LibraryFilterMixin
 
 
 class IsLibrarianOrAdmin(permissions.BasePermission):
-    """Only librarians and admins can access"""
     def has_permission(self, request, view):
         return (
             request.user.is_authenticated and
@@ -16,42 +17,47 @@ class IsLibrarianOrAdmin(permissions.BasePermission):
         )
 
 
-class BorrowRecordListAPIView(generics.ListAPIView):
-    """
-    GET /api/borrowing/
-    Librarians and admins see all records.
-    Members see only their own records.
-    """
-    serializer_class = BorrowRecordSerializer
+class BorrowRecordListAPIView(
+    LibraryFilterMixin,
+    generics.ListAPIView
+):
+    serializer_class   = BorrowRecordSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
-        if user.role in ['LIBRARIAN', 'ADMIN']:
-            return BorrowRecord.objects.all().select_related(
-                'member', 'book', 'book__genre'
-            ).order_by('-created_at')
-        return BorrowRecord.objects.filter(
-            member=user
-        ).select_related(
+        base = BorrowRecord.objects.all().select_related(
             'member', 'book', 'book__genre'
         ).order_by('-created_at')
 
+        # Members only see their own records
+        if user.role == 'MEMBER':
+            return base.filter(member=user)
 
-class BorrowRecordDetailAPIView(generics.RetrieveAPIView):
-    """GET /api/borrowing/<id>/"""
-    serializer_class = BorrowRecordSerializer
+        # Staff see records from their library
+        return self.get_library_queryset(base, 'book__library')
+
+
+class BorrowRecordDetailAPIView(
+    LibraryFilterMixin,
+    generics.RetrieveAPIView
+):
+    serializer_class   = BorrowRecordSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
-        if user.role in ['LIBRARIAN', 'ADMIN']:
-            return BorrowRecord.objects.all()
-        return BorrowRecord.objects.filter(member=user)
+        base = BorrowRecord.objects.all().select_related(
+            'member', 'book', 'book__genre'
+        )
+
+        if user.role == 'MEMBER':
+            return base.filter(member=user)
+
+        return self.get_library_queryset(base, 'book__library')
 
 
 class BorrowRequestAPIView(APIView):
-    """POST /api/borrowing/request/<book_pk>/"""
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, book_pk):
@@ -61,7 +67,17 @@ class BorrowRequestAPIView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        book = get_object_or_404(Book, pk=book_pk)
+        user    = request.user
+        library = getattr(user, 'library', None)
+
+        # Member can only borrow from their library
+        if library:
+            book = get_object_or_404(Book, pk=book_pk, library=library)
+        else:
+            return Response(
+                {'detail': 'You have not joined a library yet.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         if not book.is_available:
             return Response(
@@ -70,7 +86,7 @@ class BorrowRequestAPIView(APIView):
             )
 
         existing = BorrowRecord.objects.filter(
-            member=request.user,
+            member=user,
             book=book,
             status__in=[
                 BorrowRecord.Status.REQUESTED,
@@ -85,20 +101,26 @@ class BorrowRequestAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        record = BorrowRecord.objects.create(
-            member=request.user,
-            book=book,
-        )
+        record     = BorrowRecord.objects.create(member=user, book=book)
         serializer = BorrowRecordSerializer(record)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class ApproveRequestAPIView(APIView):
-    """POST /api/borrowing/<pk>/approve/"""
     permission_classes = [IsLibrarianOrAdmin]
 
     def post(self, request, pk):
         record = get_object_or_404(BorrowRecord, pk=pk)
+
+        # Verify librarian manages this library
+        user    = request.user
+        library = getattr(user, 'library', None)
+
+        if library and record.book.library != library:
+            return Response(
+                {'detail': 'You can only manage your own library.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
 
         if record.status != BorrowRecord.Status.REQUESTED:
             return Response(
@@ -108,65 +130,87 @@ class ApproveRequestAPIView(APIView):
 
         record.approve(librarian=request.user)
 
-        # Send approval email notification
-        from core.emails import send_borrow_approved_email
-        send_borrow_approved_email(record)
+        try:
+            from core.emails import send_borrow_approved_email
+            send_borrow_approved_email(record)
+        except Exception:
+            pass
 
-        serializer = BorrowRecordSerializer(record)
-        return Response(serializer.data)
+        return Response(BorrowRecordSerializer(record).data)
 
 
 class RejectRequestAPIView(APIView):
-    """POST /api/borrowing/<pk>/reject/"""
     permission_classes = [IsLibrarianOrAdmin]
 
     def post(self, request, pk):
-        record = get_object_or_404(BorrowRecord, pk=pk)
+        record  = get_object_or_404(BorrowRecord, pk=pk)
+        user    = request.user
+        library = getattr(user, 'library', None)
+
+        if library and record.book.library != library:
+            return Response(
+                {'detail': 'You can only manage your own library.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         note = request.data.get('note', '')
         record.reject(librarian=request.user, note=note)
 
-        # Send rejection email notification
-        from core.emails import send_borrow_rejected_email
-        send_borrow_rejected_email(record)
+        try:
+            from core.emails import send_borrow_rejected_email
+            send_borrow_rejected_email(record)
+        except Exception:
+            pass
 
-        serializer = BorrowRecordSerializer(record)
-        return Response(serializer.data)
+        return Response(BorrowRecordSerializer(record).data)
 
 
 class MarkBorrowedAPIView(APIView):
-    """POST /api/borrowing/<pk>/mark-borrowed/"""
     permission_classes = [IsLibrarianOrAdmin]
 
     def post(self, request, pk):
-        record = get_object_or_404(BorrowRecord, pk=pk)
+        record  = get_object_or_404(BorrowRecord, pk=pk)
+        user    = request.user
+        library = getattr(user, 'library', None)
+
+        if library and record.book.library != library:
+            return Response(
+                {'detail': 'You can only manage your own library.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
 
         if record.status != BorrowRecord.Status.APPROVED:
             return Response(
-                {'detail': 'Only APPROVED records can be marked as borrowed.'},
+                {'detail': 'Only APPROVED records can be marked borrowed.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         record.mark_borrowed()
-        serializer = BorrowRecordSerializer(record)
-        return Response(serializer.data)
+        return Response(BorrowRecordSerializer(record).data)
 
 
 class MarkReturnedAPIView(APIView):
-    """POST /api/borrowing/<pk>/mark-returned/"""
     permission_classes = [IsLibrarianOrAdmin]
 
     def post(self, request, pk):
-        record = get_object_or_404(BorrowRecord, pk=pk)
+        record  = get_object_or_404(BorrowRecord, pk=pk)
+        user    = request.user
+        library = getattr(user, 'library', None)
+
+        if library and record.book.library != library:
+            return Response(
+                {'detail': 'You can only manage your own library.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
 
         if record.status not in [
             BorrowRecord.Status.BORROWED,
             BorrowRecord.Status.OVERDUE,
         ]:
             return Response(
-                {'detail': 'Only BORROWED or OVERDUE records can be returned.'},
+                {'detail': 'Only BORROWED or OVERDUE can be returned.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         record.mark_returned()
-        serializer = BorrowRecordSerializer(record)
-        return Response(serializer.data)
+        return Response(BorrowRecordSerializer(record).data)

@@ -1,11 +1,10 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { BookOpen, ArrowLeft } from 'lucide-react'
+import { BookOpen } from 'lucide-react'
 import { registerApi } from '../../api/auth'
 import Input from '../../components/ui/Input'
 import Button from '../../components/ui/Button'
 import Alert from '../../components/ui/Alert'
-
 
 const Register: React.FC = () => {
   const navigate = useNavigate()
@@ -18,82 +17,73 @@ const Register: React.FC = () => {
     password:     '',
     password2:    '',
     phone_number: '',
+    join_code:    '',
   })
-  const [joinCode, setJoinCode] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+
+  const [loading, setLoading]     = useState(false)
+  const [error, setError]         = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
-    // Clear field error when user types
     if (fieldErrors[name]) {
       setFieldErrors(prev => ({ ...prev, [name]: '' }))
     }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault()
-  setError(null)
-  setFieldErrors({})
+    e.preventDefault()
+    setError(null)
+    setFieldErrors({})
 
-  if (formData.password !== formData.password2) {
-    setFieldErrors({ password2: 'Passwords do not match.' })
-    return
-  }
-
-  setLoading(true)
-
-  try {
-    await registerApi(formData)
-    navigate('/verify-email', {
-      state: { email: formData.email }
-    })
-  } catch (err: any) {
-    const data = err.response?.data
-
-    if (!err.response) {
-      setError('Cannot connect to server. Please check your connection.')
+    if (formData.password !== formData.password2) {
+      setFieldErrors({ password2: 'Passwords do not match.' })
       return
     }
 
-    if (data && typeof data === 'object') {
-      const errors: Record<string, string> = {}
-      Object.entries(data).forEach(([key, value]) => {
-        errors[key] = Array.isArray(value)
-          ? value[0]
-          : String(value)
-      })
-      setFieldErrors(errors)
+    setLoading(true)
 
-      // Show first error as main error message
-      const firstError = Object.values(errors)[0]
-      if (firstError) setError(firstError)
-    } else {
-      setError('Registration failed. Please try again.')
+    try {
+      await registerApi(formData)
+      navigate('/verify-email', {
+        state: { email: formData.email }
+      })
+    } catch (err: any) {
+      if (!err.response) {
+        setError('Cannot connect to server.')
+        return
+      }
+      const data = err.response?.data
+      if (data && typeof data === 'object') {
+        const errors: Record<string, string> = {}
+        Object.entries(data).forEach(([key, value]) => {
+          errors[key] = Array.isArray(value) ? value[0] : String(value)
+        })
+        setFieldErrors(errors)
+        const first = Object.values(errors)[0]
+        if (first) setError(first)
+      } else {
+        setError('Registration failed. Please try again.')
+      }
+    } finally {
+      setLoading(false)
     }
-  } finally {
-    setLoading(false)
   }
-}
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center
                     justify-center px-4 py-8">
       <div className="w-full max-w-md">
 
+        {/* Back */}
         <div className="mb-4">
-        <Link
-          to="/"
-          className="inline-flex items-center gap-1.5 text-sm
-                     text-gray-500 hover:text-gray-700
-                     transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to home
-        </Link>
-      </div>
+          <Link to="/"
+                className="inline-flex items-center gap-1.5 text-sm
+                           text-gray-500 hover:text-gray-700">
+            ← Back to home
+          </Link>
+        </div>
 
         {/* Logo */}
         <div className="text-center mb-8">
@@ -104,48 +94,19 @@ const Register: React.FC = () => {
           <h1 className="text-2xl font-bold text-gray-900">
             Create account
           </h1>
-          <p className="text-gray-500 mt-1">
-            Join the library today
-          </p>
+          <p className="text-gray-500 mt-1">Join your library today</p>
         </div>
 
         <div className="card">
-
           {error && (
             <div className="mb-4">
-              <Alert
-                type="error"
-                message={error}
-                onClose={() => setError(null)}
-              />
+              <Alert type="error" message={error}
+                     onClose={() => setError(null)} />
             </div>
           )}
 
-       
-
-
-
-<div>
-  <label className="block text-sm font-medium text-gray-700 mb-1">
-    Library Join Code
-    <span className="text-gray-400 font-normal ml-1">(optional)</span>
-  </label>
-  <input
-    type="text"
-    value={joinCode}
-    onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-    placeholder="Enter your library's join code"
-    className="input-field"
-    maxLength={10}
-  />
-  <p className="text-xs text-gray-500 mt-1">
-    Ask your librarian for the join code
-  </p>
-</div>
-
           <form onSubmit={handleSubmit} className="space-y-4">
 
-            {/* Name row */}
             <div className="grid grid-cols-2 gap-3">
               <Input
                 label="First Name"
@@ -219,12 +180,41 @@ const Register: React.FC = () => {
               required
             />
 
-            <Button
-              type="submit"
-              fullWidth
-              loading={loading}
-              className="mt-2"
-            >
+            {/* Library Join Code */}
+            <div>
+              <label className="block text-sm font-medium
+                                text-gray-700 mb-1">
+                Library Join Code
+                <span className="text-gray-400 font-normal ml-1">
+                  (optional)
+                </span>
+              </label>
+              <input
+                type="text"
+                name="join_code"
+                value={formData.join_code}
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  join_code: e.target.value.toUpperCase()
+                }))}
+                placeholder="e.g. UNIV2025"
+                className="input-field font-mono tracking-widest
+                           uppercase"
+                maxLength={20}
+              />
+              {fieldErrors.join_code ? (
+                <p className="text-xs text-red-600 mt-1">
+                  {fieldErrors.join_code}
+                </p>
+              ) : (
+                <p className="text-xs text-gray-500 mt-1">
+                  Ask your librarian for the join code to access
+                  your library's catalogue.
+                </p>
+              )}
+            </div>
+
+            <Button type="submit" fullWidth loading={loading}>
               Create Account
             </Button>
 
@@ -232,14 +222,11 @@ const Register: React.FC = () => {
 
           <p className="text-center text-sm text-gray-500 mt-6">
             Already have an account?{' '}
-            <Link
-              to="/login"
-              className="text-blue-600 font-medium hover:underline"
-            >
+            <Link to="/login"
+                  className="text-blue-600 font-medium hover:underline">
               Sign in
             </Link>
           </p>
-
         </div>
       </div>
     </div>

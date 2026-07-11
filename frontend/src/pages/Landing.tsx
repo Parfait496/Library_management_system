@@ -633,16 +633,7 @@ const Landing: React.FC = () => {
                 </span>
               </p>
             </div>
-            <a
-              href="https://github.com/Parfait496/Library_management_system"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-gray-500
-                         hover:text-white transition-colors text-sm"
-            >
-              <ExternalLink className="w-4 h-4" />
-              GitHub
-            </a>
+          
           </div>
         </div>
       </footer>

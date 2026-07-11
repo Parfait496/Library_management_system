@@ -61,10 +61,10 @@ class User(AbstractUser):
 
 # Add this field to User model
     library = models.ForeignKey(
-         'libraries.Library',
-         on_delete=models.SET_NULL,
-         null=True,
-         blank=True,
-         related_name='members',
-         help_text='Which library this user belongs to'
-         )
+        'libraries.Library',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='members',
+        help_text='Which library this user belongs to'
+)
