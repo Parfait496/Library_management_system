@@ -1,70 +1,55 @@
-from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.db import models
 
 
 class User(AbstractUser):
-     #add  roles based access
+    """
+    Custom user model for ASOME Library.
+
+    Roles:
+    - ADMIN     → super admin, manages everything
+    - LIBRARIAN → manages books, borrows, fines
+    - MEMBER    → students who borrow books
+    """
 
     class Role(models.TextChoices):
-          ADMIN = 'ADMIN', 'admin'
-          LIBRARIAN = 'LIBRARIAN', 'librarian'
-          MEMBER = 'MEMBER', 'member'
+        ADMIN     = 'ADMIN',     'Admin'
+        LIBRARIAN = 'LIBRARIAN', 'Librarian'
+        MEMBER    = 'MEMBER',    'Member'
 
     role = models.CharField(
-         max_length=20,
-         choices=Role.choices,
-         default=Role.MEMBER,
+        max_length=20,
+        choices=Role.choices,
+        default=Role.MEMBER,
     )
-
-    phone_number = models.CharField(max_length=15, blank=True, null=True)
-    address = models.TextField(blank=True, null=True)
-    date_of_birth = models.DateField(blank=True, null=True)
+    phone_number    = models.CharField(max_length=15, blank=True, null=True)
+    address         = models.TextField(blank=True, null=True)
+    student_id      = models.CharField(
+        max_length=50, blank=True, null=True,
+        help_text='Student ID for ASOME members'
+    )
     profile_picture = models.ImageField(
-         upload_to='profile_picture/',
-         blank=True,
-         null=True
+        upload_to='profile_pictures/',
+        blank=True, null=True
     )
-
-    is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-
     def __str__(self):
-         return f"{self.username} ({self.role})"
-    
-
-    # Role helper properties (used in views and templates)
+        return f"{self.username} ({self.role})"
 
     @property
     def is_admin(self):
-         return self.role == self.Role.ADMIN
-    
+        return self.role == self.Role.ADMIN
+
     @property
     def is_librarian(self):
-         return self.role == self.Role.LIBRARIAN
-    
+        return self.role == self.Role.LIBRARIAN
+
     @property
     def is_member(self):
-         return self.role == self.Role.MEMBER
+        return self.role == self.Role.MEMBER
 
-
-
-     # Email verification
-    email_verification_token = models.CharField(
-    max_length=64,
-    blank=True,
-    null=True,
-    unique=True
-    )
-    email_verified = models.BooleanField(default=False)
-
-# Add this field to User model
-    library = models.ForeignKey(
-        'libraries.Library',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='members',
-        help_text='Which library this user belongs to'
-)
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}".strip() or self.username

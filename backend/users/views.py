@@ -1,56 +1,46 @@
-# users/views.py — API views with library filtering
-
 from rest_framework import generics, permissions, status, parsers
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 from django.db.models import Q
-from core.mixins import LibraryFilterMixin
 
 from .serializers import (
     UserSerializer,
-    RegisterSerializer,
+    CreateUserSerializer,
     ChangePasswordSerializer,
 )
 
 User = get_user_model()
 
 
-class LibraryFilterMixin:
-    """Filter users by library"""
+class IsAdminUser(permissions.BasePermission):
+    """Only admins can access"""
+    def has_permission(self, request, view):
+        return (
+            request.user.is_authenticated and
+            request.user.role == 'ADMIN'
+        )
 
-    def get_library_queryset(self, queryset):
-        user = self.request.user
 
-        if user.role == 'ADMIN':
-            return queryset
-
-        if hasattr(user, 'library') and user.library:
-            return queryset.filter(library=user.library)
-
-        return queryset.none()
+class IsAdminOrLibrarian(permissions.BasePermission):
+    """Admins and librarians can access"""
+    def has_permission(self, request, view):
+        return (
+            request.user.is_authenticated and
+            request.user.role in ['ADMIN', 'LIBRARIAN']
+        )
 
 
 # ===========================================================================
 # AUTH VIEWS
 # ===========================================================================
 
-class RegisterAPIView(generics.CreateAPIView):
-    """POST /api/auth/register/"""
-    queryset           = User.objects.all()
-    serializer_class   = RegisterSerializer
-    permission_classes = [permissions.AllowAny]
-
-    def perform_create(self, serializer):
-        user = serializer.save()
-        # Send verification email
-        from core.emails import send_verification_email
-        send_verification_email(user)
-
-
 class ProfileAPIView(generics.RetrieveUpdateAPIView):
-    """GET/PATCH /api/users/profile/"""
+    """
+    GET   /api/users/profile/  — get own profile
+    PATCH /api/users/profile/  — update own profile
+    """
     serializer_class   = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
     parser_classes     = [
@@ -63,37 +53,9 @@ class ProfileAPIView(generics.RetrieveUpdateAPIView):
         return self.request.user
 
     def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context['request'] = self.request
-        return context
-
-
-class ChangePasswordAPIView(APIView):
-    """POST /api/users/change-password/"""
-    permission_classes = [permissions.IsAuthenticated]
-
-    def post(self, request):
-        serializer = ChangePasswordSerializer(data=request.data)
-
-        if serializer.is_valid():
-            user = request.user
-
-            if not user.check_password(
-                serializer.validated_data['old_password']
-            ):
-                return Response(
-                    {'old_password': 'Incorrect password.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            user.set_password(serializer.validated_data['new_password'])
-            user.save()
-            return Response({'message': 'Password changed successfully.'})
-
-        return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        ctx = super().get_serializer_context()
+        ctx['request'] = self.request
+        return ctx
 
 
 class LogoutAPIView(APIView):
@@ -102,8 +64,7 @@ class LogoutAPIView(APIView):
 
     def post(self, request):
         try:
-            refresh_token = request.data['refresh']
-            token         = RefreshToken(refresh_token)
+            token = RefreshToken(request.data['refresh'])
             token.blacklist()
             return Response(
                 {'message': 'Logged out successfully.'},
@@ -116,160 +77,106 @@ class LogoutAPIView(APIView):
             )
 
 
-class VerifyEmailAPIView(APIView):
-    """POST /api/auth/verify-email/"""
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request):
-        token = request.data.get('token', '').strip()
-
-        if not token:
-            return Response(
-                {'detail': 'Verification code is required.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        try:
-            user = User.objects.get(email_verification_token=token)
-            user.email_verified               = True
-            user.email_verification_token     = None
-            user.save(update_fields=[
-                'email_verified', 'email_verification_token'
-            ])
-
-            from core.emails import send_welcome_email
-            send_welcome_email(user)
-
-            return Response(
-                {'detail': 'Email verified! You can now log in.'}
-            )
-
-        except User.DoesNotExist:
-            return Response(
-                {'detail': 'Invalid verification code.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-
-class ResendVerificationAPIView(APIView):
-    """POST /api/auth/resend-verification/"""
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request):
-        email = request.data.get('email', '').strip()
-
-        try:
-            user = User.objects.get(email=email, email_verified=False)
-            from core.emails import send_verification_email
-            send_verification_email(user)
-        except User.DoesNotExist:
-            pass  # do not reveal if email exists
-
-        return Response({
-            'detail': 'If that email exists and is unverified, we sent a code.'
-        })
-
-
-class ForgotPasswordAPIView(APIView):
-    """POST /api/auth/forgot-password/"""
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request):
-        email = request.data.get('email', '').strip()
-
-        try:
-            user = User.objects.get(email=email, is_active=True)
-
-            import secrets
-            token                         = str(secrets.randbelow(900000) + 100000)
-            user.email_verification_token = token
-            user.save(update_fields=['email_verification_token'])
-
-            from django.core.mail import send_mail
-            from django.conf import settings
-            send_mail(
-                subject='Password Reset Code — LibraryMS',
-                message=f'Your reset code is: {token}',
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                fail_silently=True,
-            )
-        except User.DoesNotExist:
-            pass
-
-        return Response({
-            'detail': 'If that email exists, we sent a reset code.'
-        })
-
-
-class ResetPasswordAPIView(APIView):
-    """POST /api/auth/reset-password/"""
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request):
-        token    = request.data.get('token', '').strip()
-        password = request.data.get('password', '')
-
-        if not token or not password:
-            return Response(
-                {'detail': 'Token and password are required.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        try:
-            user                          = User.objects.get(email_verification_token=token)
-            user.set_password(password)
-            user.email_verification_token = None
-            user.save()
-            return Response({'detail': 'Password reset successfully.'})
-
-        except User.DoesNotExist:
-            return Response(
-                {'detail': 'Invalid or expired code.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-
-# ===========================================================================
-# MEMBERS MANAGEMENT VIEWS
-# ===========================================================================
-
-class MembersListAPIView(LibraryFilterMixin, generics.ListAPIView):
-    serializer_class   = UserSerializer
+class ChangePasswordAPIView(APIView):
+    """POST /api/users/change-password/"""
     permission_classes = [permissions.IsAuthenticated]
 
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data)
+        if serializer.is_valid():
+            if not request.user.check_password(
+                serializer.validated_data['old_password']
+            ):
+                return Response(
+                    {'old_password': 'Incorrect password.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            request.user.set_password(
+                serializer.validated_data['new_password']
+            )
+            request.user.save()
+            return Response({'message': 'Password changed.'})
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+# ===========================================================================
+# USER MANAGEMENT — Admin creates Librarians, Librarian creates Members
+# ===========================================================================
+
+class CreateUserAPIView(generics.CreateAPIView):
+    """
+    POST /api/users/create/
+    Admin can create any user.
+    Librarian can only create Members.
+    """
+    serializer_class   = CreateUserSerializer
+    permission_classes = [IsAdminOrLibrarian]
+
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx['request'] = self.request
+        return ctx
+
+
+class UsersListAPIView(generics.ListAPIView):
+    """
+    GET /api/users/
+    Admin sees all users.
+    Librarian sees only Members.
+    """
+    serializer_class   = UserSerializer
+    permission_classes = [IsAdminOrLibrarian]
+
     def get_queryset(self):
-        if self.request.user.role not in ['LIBRARIAN', 'ADMIN']:
-            return User.objects.none()
+        user     = self.request.user
+        queryset = User.objects.all().order_by('-created_at')
 
-        base = User.objects.filter(
-            role='MEMBER'
-        ).order_by('-date_joined')
+        # Librarians only see members
+        if user.is_librarian:
+            queryset = queryset.filter(role='MEMBER')
 
-        # Apply library filter
-        base = self.get_library_queryset(base, 'library')
+        # Filter by role
+        role = self.request.query_params.get('role')
+        if role:
+            queryset = queryset.filter(role=role)
 
         # Search
         search = self.request.query_params.get('search', '')
         if search:
-            from django.db.models import Q
-            base = base.filter(
+            queryset = queryset.filter(
                 Q(username__icontains=search) |
                 Q(first_name__icontains=search) |
                 Q(last_name__icontains=search) |
-                Q(email__icontains=search)
+                Q(email__icontains=search) |
+                Q(student_id__icontains=search)
             )
-        return base
+
+        return queryset
 
 
-class MemberDetailAPIView(LibraryFilterMixin, generics.RetrieveAPIView):
-    """GET /api/users/members/<pk>/"""
+class UserDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    GET    /api/users/<pk>/  — get user
+    PATCH  /api/users/<pk>/  — update user
+    DELETE /api/users/<pk>/  — delete user (admin only)
+    """
     serializer_class   = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAdminOrLibrarian]
 
     def get_queryset(self):
-        if self.request.user.role not in ['LIBRARIAN', 'ADMIN']:
-            return User.objects.none()
+        user = self.request.user
+        if user.is_admin:
+            return User.objects.all()
+        # Librarians can only see/edit members
+        return User.objects.filter(role='MEMBER')
 
-        queryset = User.objects.filter(role='MEMBER')
-        return self.get_library_queryset(queryset)
+    def destroy(self, request, *args, **kwargs):
+        if not request.user.is_admin:
+            return Response(
+                {'detail': 'Only admins can delete users.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().destroy(request, *args, **kwargs)

@@ -6,9 +6,10 @@ from django.http import JsonResponse
 
 
 def health_check(request):
-    """Health check endpoint for Railway"""
-    return JsonResponse({'status': 'ok', 'service': 'library-api'})
-
+    return JsonResponse({
+        'status': 'ok',
+        'system': 'ASOME Library Management System'
+    })
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -17,7 +18,6 @@ urlpatterns = [
     path('api/', include('books.urls')),
     path('api/', include('borrowing.urls')),
     path('api/', include('fines.urls')),
-    path('api/', include('libraries.urls')),
 ]  
 
 urlpatterns += static(

@@ -9,18 +9,12 @@ class Genre(models.Model):
     """Book genre — belongs to a specific library"""
     name    = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
-    library = models.ForeignKey(
-        'libraries.Library',
-        on_delete=models.CASCADE,
-        null=True, blank=True,
-        related_name='genres'
-    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['name']
         # Same genre name can exist in different libraries
-        unique_together = [['name', 'library']]
+        unique_together = ['name']
 
     def __str__(self):
         return self.name
@@ -28,14 +22,6 @@ class Genre(models.Model):
 
 class Book(models.Model):
     """Book — belongs to a specific library"""
-
-    library = models.ForeignKey(
-        'libraries.Library',
-        on_delete=models.CASCADE,
-        null=True, blank=True,
-        related_name='books',
-        help_text='Which library owns this book'
-    )
 
     # ISBN no longer unique globally
     # Same book can exist in multiple libraries
@@ -95,12 +81,7 @@ class BookSuggestion(models.Model):
         APPROVED = 'APPROVED', 'Approved'
         REJECTED = 'REJECTED', 'Rejected'
 
-    library      = models.ForeignKey(
-        'libraries.Library',
-        on_delete=models.CASCADE,
-        null=True, blank=True,
-        related_name='suggestions'
-    )
+    
     suggested_by = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
