@@ -6,7 +6,6 @@ from django.shortcuts import get_object_or_404
 from .models import BorrowRecord
 from .serializers import BorrowRecordSerializer
 from books.models import Book
-from core.mixins import LibraryFilterMixin
 
 
 class IsLibrarianOrAdmin(permissions.BasePermission):
@@ -17,10 +16,7 @@ class IsLibrarianOrAdmin(permissions.BasePermission):
         )
 
 
-class BorrowRecordListAPIView(
-    LibraryFilterMixin,
-    generics.ListAPIView
-):
+class BorrowRecordListAPIView(generics.ListAPIView):
     serializer_class   = BorrowRecordSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -34,14 +30,11 @@ class BorrowRecordListAPIView(
         if user.role == 'MEMBER':
             return base.filter(member=user)
 
-        # Staff see records from their library
-        return self.get_library_queryset(base, 'book__library')
+        # Staff see everything
+        return base
 
 
-class BorrowRecordDetailAPIView(
-    LibraryFilterMixin,
-    generics.RetrieveAPIView
-):
+class BorrowRecordDetailAPIView(generics.RetrieveAPIView):
     serializer_class   = BorrowRecordSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -54,7 +47,7 @@ class BorrowRecordDetailAPIView(
         if user.role == 'MEMBER':
             return base.filter(member=user)
 
-        return self.get_library_queryset(base, 'book__library')
+        return base
 
 
 class BorrowRequestAPIView(APIView):
@@ -67,17 +60,8 @@ class BorrowRequestAPIView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        user    = request.user
-        library = getattr(user, 'library', None)
-
-        # Member can only borrow from their library
-        if library:
-            book = get_object_or_404(Book, pk=book_pk, library=library)
-        else:
-            return Response(
-                {'detail': 'You have not joined a library yet.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        user = request.user
+        book = get_object_or_404(Book, pk=book_pk)
 
         if not book.is_available:
             return Response(
@@ -112,16 +96,6 @@ class ApproveRequestAPIView(APIView):
     def post(self, request, pk):
         record = get_object_or_404(BorrowRecord, pk=pk)
 
-        # Verify librarian manages this library
-        user    = request.user
-        library = getattr(user, 'library', None)
-
-        if library and record.book.library != library:
-            return Response(
-                {'detail': 'You can only manage your own library.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
         if record.status != BorrowRecord.Status.REQUESTED:
             return Response(
                 {'detail': 'Only REQUESTED records can be approved.'},
@@ -143,15 +117,7 @@ class RejectRequestAPIView(APIView):
     permission_classes = [IsLibrarianOrAdmin]
 
     def post(self, request, pk):
-        record  = get_object_or_404(BorrowRecord, pk=pk)
-        user    = request.user
-        library = getattr(user, 'library', None)
-
-        if library and record.book.library != library:
-            return Response(
-                {'detail': 'You can only manage your own library.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        record = get_object_or_404(BorrowRecord, pk=pk)
 
         note = request.data.get('note', '')
         record.reject(librarian=request.user, note=note)
@@ -169,15 +135,7 @@ class MarkBorrowedAPIView(APIView):
     permission_classes = [IsLibrarianOrAdmin]
 
     def post(self, request, pk):
-        record  = get_object_or_404(BorrowRecord, pk=pk)
-        user    = request.user
-        library = getattr(user, 'library', None)
-
-        if library and record.book.library != library:
-            return Response(
-                {'detail': 'You can only manage your own library.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        record = get_object_or_404(BorrowRecord, pk=pk)
 
         if record.status != BorrowRecord.Status.APPROVED:
             return Response(
@@ -193,15 +151,7 @@ class MarkReturnedAPIView(APIView):
     permission_classes = [IsLibrarianOrAdmin]
 
     def post(self, request, pk):
-        record  = get_object_or_404(BorrowRecord, pk=pk)
-        user    = request.user
-        library = getattr(user, 'library', None)
-
-        if library and record.book.library != library:
-            return Response(
-                {'detail': 'You can only manage your own library.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        record = get_object_or_404(BorrowRecord, pk=pk)
 
         if record.status not in [
             BorrowRecord.Status.BORROWED,

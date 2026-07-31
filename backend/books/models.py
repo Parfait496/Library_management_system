@@ -9,14 +9,32 @@ class Genre(models.Model):
     """Book genre — belongs to a specific library"""
     name    = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
+    parent      = models.ForeignKey(        
+        'self',
+        on_delete=models.CASCADE,
+        null=True, blank=True,
+        related_name='subcategories',
+        help_text='Leave blank for a top-level category.'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['name']
-        # Same genre name can exist in different libraries
-        unique_together = ['name']
+        ordering = ['parent__name', 'name']
+        unique_together = ['name', 'parent']
 
     def __str__(self):
+        if self.parent:
+            return f"{self.parent.name} → {self.name}"
+        return self.name
+
+    @property                                  # ← NEW
+    def is_top_level(self):
+        return self.parent_id is None
+
+    @property                                  # ← NEW
+    def full_path(self):
+        if self.parent:
+            return f"{self.parent.full_path} > {self.name}"
         return self.name
 
 

@@ -6,7 +6,6 @@ from django.db.models import Sum
 
 from .models import Fine
 from .serializers import FineSerializer
-from core.mixins import LibraryFilterMixin
 
 
 class IsLibrarianOrAdmin(permissions.BasePermission):
@@ -17,7 +16,7 @@ class IsLibrarianOrAdmin(permissions.BasePermission):
         )
 
 
-class FineListAPIView(LibraryFilterMixin, generics.ListAPIView):
+class FineListAPIView(generics.ListAPIView):
     serializer_class   = FineSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -32,10 +31,6 @@ class FineListAPIView(LibraryFilterMixin, generics.ListAPIView):
         # Members only see their own fines
         if user.role == 'MEMBER':
             base = base.filter(member=user)
-        else:
-            base = self.get_library_queryset(
-                base, 'borrow_record__book__library'
-            )
 
         # Filter by status
         status_filter = self.request.query_params.get('status')
@@ -45,7 +40,7 @@ class FineListAPIView(LibraryFilterMixin, generics.ListAPIView):
         return base
 
 
-class FineDetailAPIView(LibraryFilterMixin, generics.RetrieveAPIView):
+class FineDetailAPIView(generics.RetrieveAPIView):
     serializer_class   = FineSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -56,24 +51,14 @@ class FineDetailAPIView(LibraryFilterMixin, generics.RetrieveAPIView):
         if user.role == 'MEMBER':
             return base.filter(member=user)
 
-        return self.get_library_queryset(
-            base, 'borrow_record__book__library'
-        )
+        return base
 
 
 class ResolveFineAPIView(APIView):
     permission_classes = [IsLibrarianOrAdmin]
 
     def post(self, request, pk):
-        fine    = get_object_or_404(Fine, pk=pk)
-        user    = request.user
-        library = getattr(user, 'library', None)
-
-        if library and fine.borrow_record.book.library != library:
-            return Response(
-                {'detail': 'You can only manage your own library.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        fine = get_object_or_404(Fine, pk=pk)
 
         if fine.is_resolved:
             return Response(

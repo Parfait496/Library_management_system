@@ -2,8 +2,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Save, Camera, BookOpen } from 'lucide-react'
 import {
-  getBookApi, createBookApi,
-  updateBookApi, getGenresApi,
+  getBookApi, createBookApi, updateBookApi, getGenresApi,
 } from '../../api/books'
 import { Genre } from '../../types'
 import Input from '../../components/ui/Input'
@@ -17,7 +16,8 @@ const BookForm: React.FC = () => {
   const navigate    = useNavigate()
   const fileRef     = useRef<HTMLInputElement>(null)
 
-  const [genres, setGenres]         = useState<Genre[]>([])
+  // categories = top-level genres, each with .subcategories nested
+  const [categories, setCategories] = useState<Genre[]>([])
   const [loading, setLoading]       = useState(false)
   const [pageLoading, setPageLoading] = useState(isEditing)
   const [error, setError]           = useState<string | null>(null)
@@ -25,36 +25,53 @@ const BookForm: React.FC = () => {
   const [coverFile, setCoverFile]   = useState<File | null>(null)
   const [coverPreview, setCoverPreview] = useState<string | null>(null)
 
+  // Two-step genre selection
+  const [selectedCategory, setSelectedCategory] = useState('')
+
   const [formData, setFormData] = useState({
     isbn:             '',
     title:            '',
     author:           '',
     publisher:        '',
     publication_year: '',
-    genre:            '',
+    genre:            '', // holds the SUBCATEGORY id
     description:      '',
     total_copies:     '1',
   })
 
+  // Subcategories available for whichever category is selected
+  const subcategoriesForSelected =
+    categories.find(c => c.id.toString() === selectedCategory)
+      ?.subcategories ?? []
+
   useEffect(() => {
     const load = async () => {
       try {
-        const genresData = await getGenresApi()
-        setGenres(genresData)
+        const categoryTree = await getGenresApi({ top_level: true })
+        setCategories(categoryTree)
 
         if (isEditing) {
           const book = await getBookApi(Number(id))
+          const genreId = book.genre?.toString() || ''
+
+          // Figure out which category this book's subcategory belongs to
+          const parentCategory = categoryTree.find(cat =>
+            cat.subcategories.some(sub => sub.id.toString() === genreId)
+          )
+          if (parentCategory) {
+            setSelectedCategory(parentCategory.id.toString())
+          }
+
           setFormData({
             isbn:             book.isbn || '',
             title:            book.title || '',
             author:           book.author || '',
             publisher:        book.publisher || '',
             publication_year: book.publication_year?.toString() || '',
-            genre:            book.genre?.toString() || '',
+            genre:            genreId,
             description:      book.description || '',
             total_copies:     book.total_copies.toString(),
           })
-          // Show existing cover
           if ((book as any).cover_image_url) {
             setCoverPreview((book as any).cover_image_url)
           }
@@ -78,10 +95,18 @@ const BookForm: React.FC = () => {
     }
   }
 
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedCategory(e.target.value)
+    // Reset subcategory whenever the category changes
+    setFormData(prev => ({ ...prev, genre: '' }))
+    if (fieldErrors.genre) {
+      setFieldErrors(prev => ({ ...prev, genre: '' }))
+    }
+  }
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      // Validate size — max 2MB
       if (file.size > 2 * 1024 * 1024) {
         setError('Image must be smaller than 2MB.')
         return
@@ -98,7 +123,6 @@ const BookForm: React.FC = () => {
     setLoading(true)
 
     try {
-      // Build data object — only include non-empty values
       const data: Record<string, any> = {
         isbn:         formData.isbn,
         title:        formData.title,
@@ -171,7 +195,6 @@ const BookForm: React.FC = () => {
                 Cover Image
               </label>
               <div className="flex items-start gap-4">
-                {/* Preview */}
                 <div
                   onClick={() => fileRef.current?.click()}
                   className="w-24 h-32 bg-gray-100 rounded-xl
@@ -276,29 +299,57 @@ const BookForm: React.FC = () => {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium
-                                text-gray-700 mb-1">
-                Genre
-              </label>
-              <select
-                name="genre"
-                value={formData.genre}
-                onChange={handleChange}
-                className="input-field"
-              >
-                <option value="">Select genre (optional)</option>
-                {genres.map((genre) => (
-                  <option key={genre.id} value={genre.id}>
-                    {genre.name}
+            {/* Category + Subcategory — two-step genre selection */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium
+                                  text-gray-700 mb-1">
+                  Category
+                </label>
+                <select
+                  name="category"
+                  value={selectedCategory}
+                  onChange={handleCategoryChange}
+                  className="input-field"
+                >
+                  <option value="">Select category</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium
+                                  text-gray-700 mb-1">
+                  Subcategory
+                </label>
+                <select
+                  name="genre"
+                  value={formData.genre}
+                  onChange={handleChange}
+                  className="input-field"
+                  disabled={!selectedCategory}
+                >
+                  <option value="">
+                    {selectedCategory
+                      ? 'Select subcategory (optional)'
+                      : 'Pick a category first'}
                   </option>
-                ))}
-              </select>
-              {fieldErrors.genre && (
-                <p className="mt-1 text-sm text-red-600">
-                  {fieldErrors.genre}
-                </p>
-              )}
+                  {subcategoriesForSelected.map((sub) => (
+                    <option key={sub.id} value={sub.id}>
+                      {sub.name}
+                    </option>
+                  ))}
+                </select>
+                {fieldErrors.genre && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {fieldErrors.genre}
+                  </p>
+                )}
+              </div>
             </div>
 
             <Input

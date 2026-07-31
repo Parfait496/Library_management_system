@@ -5,13 +5,14 @@ from rest_framework.parsers import MultiPartParser, FormParser
 import csv
 import io
 
+from django.db.models import Q
+
 from .models import Book, Genre, BookSuggestion
 from .serializers import (
     BookSerializer,
     GenreSerializer,
     BookSuggestionSerializer,
 )
-from core.mixins import LibraryFilterMixin
 
 
 class IsLibrarianOrAdmin(permissions.BasePermission):
@@ -26,10 +27,7 @@ class IsLibrarianOrAdmin(permissions.BasePermission):
 # BOOK VIEWS
 # ===========================================================================
 
-class BookListCreateAPIView(
-    LibraryFilterMixin,
-    generics.ListCreateAPIView
-):
+class BookListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = BookSerializer
     filter_backends  = [filters.SearchFilter, filters.OrderingFilter]
     search_fields    = ['title', 'author', 'isbn', 'genre__name']
@@ -38,7 +36,21 @@ class BookListCreateAPIView(
 
     def get_queryset(self):
         base = Book.objects.all().select_related('genre', 'added_by')
-        return self.get_library_queryset(base, 'library')
+
+        # ?genre=<subcategory_id> — exact subcategory match
+        genre_id = self.request.query_params.get('genre')
+        if genre_id:
+            base = base.filter(genre_id=genre_id)
+
+        # ?category=<top_level_genre_id> — any book whose genre is
+        # that category itself OR one of its subcategories
+        category_id = self.request.query_params.get('category')
+        if category_id:
+            base = base.filter(
+                Q(genre_id=category_id) | Q(genre__parent_id=category_id)
+            )
+
+        return base
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
@@ -51,20 +63,14 @@ class BookListCreateAPIView(
         return [permissions.IsAuthenticated()]
 
     def perform_create(self, serializer):
-        user    = self.request.user
-        library = getattr(user, 'library', None)
-        serializer.save(added_by=user, library=library)
+        serializer.save(added_by=self.request.user)
 
 
-class BookDetailAPIView(
-    LibraryFilterMixin,
-    generics.RetrieveUpdateDestroyAPIView
-):
+class BookDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = BookSerializer
 
     def get_queryset(self):
-        base = Book.objects.all().select_related('genre')
-        return self.get_library_queryset(base, 'library')
+        return Book.objects.all().select_related('genre')
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
@@ -81,16 +87,22 @@ class BookDetailAPIView(
 # GENRE VIEWS
 # ===========================================================================
 
-class GenreListCreateAPIView(
-    LibraryFilterMixin,
-    generics.ListCreateAPIView
-):
+class GenreListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = GenreSerializer
     pagination_class = None
 
     def get_queryset(self):
-        base = Genre.objects.all()
-        return self.get_library_queryset(base, 'library')
+        base = Genre.objects.all().select_related('parent')
+
+        # ?top_level=true returns only parent categories
+        # (e.g. "Medical Sciences"), each with its subcategories
+        # nested inside via the serializer. Omit it to get the
+        # flat list of every genre and subcategory.
+        top_level = self.request.query_params.get('top_level')
+        if top_level and top_level.lower() in ('true', '1', 'yes'):
+            base = base.filter(parent__isnull=True)
+
+        return base
 
     def get_permissions(self):
         if self.request.method == 'POST':
@@ -98,20 +110,14 @@ class GenreListCreateAPIView(
         return [permissions.IsAuthenticated()]
 
     def perform_create(self, serializer):
-        user    = self.request.user
-        library = getattr(user, 'library', None)
-        serializer.save(library=library)
+        serializer.save()
 
 
-class GenreDetailAPIView(
-    LibraryFilterMixin,
-    generics.RetrieveUpdateDestroyAPIView
-):
+class GenreDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = GenreSerializer
 
     def get_queryset(self):
-        base = Genre.objects.all()
-        return self.get_library_queryset(base, 'library')
+        return Genre.objects.all()
 
     def get_permissions(self):
         if self.request.method == 'GET':
@@ -123,10 +129,7 @@ class GenreDetailAPIView(
 # SUGGESTION VIEWS
 # ===========================================================================
 
-class BookSuggestionListCreateAPIView(
-    LibraryFilterMixin,
-    generics.ListCreateAPIView
-):
+class BookSuggestionListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = BookSuggestionSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -138,18 +141,13 @@ class BookSuggestionListCreateAPIView(
         if user.role == 'MEMBER':
             return base.filter(suggested_by=user)
 
-        return self.get_library_queryset(base, 'library')
+        return base
 
     def perform_create(self, serializer):
-        user    = self.request.user
-        library = getattr(user, 'library', None)
-        serializer.save(suggested_by=user, library=library)
+        serializer.save(suggested_by=self.request.user)
 
 
-class BookSuggestionDetailAPIView(
-    LibraryFilterMixin,
-    generics.RetrieveUpdateAPIView
-):
+class BookSuggestionDetailAPIView(generics.RetrieveUpdateAPIView):
     serializer_class = BookSuggestionSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -160,7 +158,7 @@ class BookSuggestionDetailAPIView(
         if user.role == 'MEMBER':
             return base.filter(suggested_by=user)
 
-        return self.get_library_queryset(base, 'library')
+        return base
 
     def partial_update(self, request, *args, **kwargs):
         if request.user.role not in ['LIBRARIAN', 'ADMIN']:
@@ -204,7 +202,6 @@ class BookCSVImportAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        library    = getattr(request.user, 'library', None)
         created    = 0
         skipped    = 0
         row_errors = []
@@ -222,19 +219,28 @@ class BookCSVImportAPIView(APIView):
 
                 isbn = row.get('isbn', '').strip()
 
-                # Skip duplicate ISBN within same library
-                if isbn and library and Book.objects.filter(
-                    isbn=isbn, library=library
-                ).exists():
+                # Skip duplicate ISBN
+                if isbn and Book.objects.filter(isbn=isbn).exists():
                     skipped += 1
                     continue
 
                 genre = None
-                genre_name = row.get('genre', '').strip()
+                genre_name    = row.get('genre', '').strip()
+                category_name = row.get('category', '').strip()
+
                 if genre_name:
+                    parent = None
+                    if category_name:
+                        parent, _ = Genre.objects.get_or_create(
+                            name=category_name, parent=None
+                        )
                     genre, _ = Genre.objects.get_or_create(
-                        name=genre_name,
-                        library=library,
+                        name=genre_name, parent=parent
+                    )
+                elif category_name:
+                    # Only a top-level category given, no subcategory
+                    genre, _ = Genre.objects.get_or_create(
+                        name=category_name, parent=None
                     )
 
                 copies_raw = row.get('copies', '1').strip()
@@ -254,7 +260,6 @@ class BookCSVImportAPIView(APIView):
                     total_copies=copies,
                     available_copies=copies,
                     added_by=request.user,
-                    library=library,
                 )
                 created += 1
 

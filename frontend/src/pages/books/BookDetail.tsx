@@ -197,9 +197,9 @@ const BookDetail: React.FC = () => {
             ) : (
               <Badge variant="danger">Not Available</Badge>
             )}
-            {book.genre_name && (
+            {book.genre_full_path && (            
               <Badge variant="info" className="ml-2">
-                {book.genre_name}
+                {book.genre_full_path}          
               </Badge>
             )}
           </div>
@@ -213,8 +213,8 @@ const BookDetail: React.FC = () => {
               <DetailRow
                 icon={<Hash className="w-4 h-4" />}
                 label="ISBN"
-                value={book.isbn}
-              />
+                value={book.isbn || '—'}
+                />
               <DetailRow
                 icon={<User className="w-4 h-4" />}
                 label="Author"

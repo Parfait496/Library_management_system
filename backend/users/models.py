@@ -24,6 +24,11 @@ class User(AbstractUser):
     )
     phone_number    = models.CharField(max_length=15, blank=True, null=True)
     address         = models.TextField(blank=True, null=True)
+    date_of_birth   = models.DateField(blank=True, null=True)
+    email_verified  = models.BooleanField(default=False)
+    email_verification_token = models.CharField(
+        max_length=255, blank=True, null=True
+    )
     student_id      = models.CharField(
         max_length=50, blank=True, null=True,
         help_text='Student ID for ASOME members'

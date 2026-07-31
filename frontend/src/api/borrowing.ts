@@ -1,24 +1,17 @@
-// borrowing.ts — all borrowing related API calls
-
 import api from './axios'
 import { BorrowRecord, PaginatedResponse } from '../types'
 
-// Get borrow records
-// Librarians see all, members see only their own
 export const getBorrowRecordsApi = async (params?: {
-  status?: string
-  page?: number
+  status?:    string
+  page?:      number
   page_size?: number
 }): Promise<PaginatedResponse<BorrowRecord>> => {
-  // Fetch large page size to get all records for counting
   const response = await api.get<PaginatedResponse<BorrowRecord>>(
-    '/borrowing/',
-    { params: { page_size: 500, ...params } }
+    '/borrowing/', { params: { page_size: 500, ...params } }
   )
   return response.data
 }
 
-// Get single borrow record
 export const getBorrowRecordApi = async (
   id: number
 ): Promise<BorrowRecord> => {
@@ -26,7 +19,6 @@ export const getBorrowRecordApi = async (
   return response.data
 }
 
-// Member requests to borrow a book
 export const requestBorrowApi = async (
   bookId: number
 ): Promise<BorrowRecord> => {
@@ -36,31 +28,26 @@ export const requestBorrowApi = async (
   return response.data
 }
 
-// Librarian approves a request
 export const approveRequestApi = async (
-  id: number,
+  id:    number,
   note?: string
 ): Promise<BorrowRecord> => {
   const response = await api.post<BorrowRecord>(
-    `/borrowing/${id}/approve/`,
-    { note }
+    `/borrowing/${id}/approve/`, { note }
   )
   return response.data
 }
 
-// Librarian rejects a request
 export const rejectRequestApi = async (
-  id: number,
+  id:    number,
   note?: string
 ): Promise<BorrowRecord> => {
   const response = await api.post<BorrowRecord>(
-    `/borrowing/${id}/reject/`,
-    { note }
+    `/borrowing/${id}/reject/`, { note }
   )
   return response.data
 }
 
-// Librarian marks book as borrowed (picked up)
 export const markBorrowedApi = async (
   id: number
 ): Promise<BorrowRecord> => {
@@ -70,7 +57,6 @@ export const markBorrowedApi = async (
   return response.data
 }
 
-// Librarian marks book as returned
 export const markReturnedApi = async (
   id: number
 ): Promise<BorrowRecord> => {

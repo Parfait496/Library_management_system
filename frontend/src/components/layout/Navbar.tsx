@@ -1,41 +1,26 @@
 import React, { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import {
-  BookOpen,
-  LayoutDashboard,
-  Clock,
-  Users,
-  BookPlus,
-  ClipboardList,
-  DollarSign,
-  LogOut,
-  User,
-  Menu,
-  X,
-  ChevronDown,
-  Tag,
-  Lightbulb,
-  Upload,
-  Building2,
+  BookOpen, LayoutDashboard, Clock,
+  Users, BookPlus, ClipboardList,
+  DollarSign, LogOut, User, Menu,
+  X, ChevronDown, Tag, Upload,
+  Lightbulb, UserPlus,
 } from 'lucide-react'
 import useAuth from '../../hooks/useAuth'
 
-// Single nav link type
 interface NavLink {
   label: string
-  path: string
-  icon: React.ReactNode
+  path:  string
+  icon:  React.ReactNode
 }
 
 const Navbar: React.FC = () => {
   const { user, logout, isAdmin, isLibrarian, isMember } = useAuth()
-  const navigate = useNavigate()
-  const location = useLocation()
+  const navigate  = useNavigate()
+  const location  = useLocation()
 
-  // Mobile menu open/close
   const [mobileOpen, setMobileOpen] = useState(false)
-
-  // User dropdown open/close
   const [dropdownOpen, setDropdownOpen] = useState(false)
 
   const handleLogout = async () => {
@@ -43,111 +28,99 @@ const Navbar: React.FC = () => {
     navigate('/login')
   }
 
-  // Check if a link is currently active
   const isActive = (path: string) =>
     location.pathname === path ||
     location.pathname.startsWith(path + '/')
 
-  // =========================================================================
-  // BUILD NAV LINKS BASED ON ROLE
-  // =========================================================================
-
+  // Common links — all logged in users
   const commonLinks: NavLink[] = [
     {
       label: 'Dashboard',
-      path: '/dashboard',
-      icon: <LayoutDashboard className="w-4 h-4" />,
+      path:  '/dashboard',
+      icon:  <LayoutDashboard className="w-4 h-4" />,
     },
     {
       label: 'Books',
-      path: '/books',
-      icon: <BookOpen className="w-4 h-4" />,
+      path:  '/books',
+      icon:  <BookOpen className="w-4 h-4" />,
     },
   ]
 
+  // Member only
   const memberLinks: NavLink[] = [
     {
       label: 'My Borrows',
-      path: '/my-borrows',
-      icon: <Clock className="w-4 h-4" />,
-    },
-    {
-      label: 'Suggest Book',
-      path: '/suggestions',
-      icon: <Lightbulb className="w-4 h-4" />,
+      path:  '/my-borrows',
+      icon:  <Clock className="w-4 h-4" />,
     },
     {
       label: 'My Fines',
-      path: '/my-fines',
-      icon: <DollarSign className="w-4 h-4" />,
+      path:  '/my-fines',
+      icon:  <DollarSign className="w-4 h-4" />,
+    },
+    {
+      label: 'Suggest Book',
+      path:  '/suggestions',
+      icon:  <Lightbulb className="w-4 h-4" />,
     },
   ]
 
+  // Staff links — librarian and admin
   const staffLinks: NavLink[] = [
     {
       label: 'Add Book',
-      path: '/books/add',
-      icon: <BookPlus className="w-4 h-4" />,
-    },
-    {
-      label: 'Genres',
-      path: '/genres',
-      icon: <Tag className="w-4 h-4" />,
+      path:  '/books/add',
+      icon:  <BookPlus className="w-4 h-4" />,
     },
     {
       label: 'Requests',
-      path: '/borrow-requests',
-      icon: <ClipboardList className="w-4 h-4" />,
-    },
-    {
-      label: 'Fines',
-      path: '/fines',
-      icon: <DollarSign className="w-4 h-4" />,
+      path:  '/borrow-requests',
+      icon:  <ClipboardList className="w-4 h-4" />,
     },
     {
       label: 'Members',
-      path: '/members',
-      icon: <Users className="w-4 h-4" />,
+      path:  '/members',
+      icon:  <Users className="w-4 h-4" />,
+    },
+    {
+      label: 'Fines',
+      path:  '/fines',
+      icon:  <DollarSign className="w-4 h-4" />,
     },
     {
       label: 'Genres',
-      path: '/genres',
-      icon: <Tag className="w-4 h-4" />,
-    },
-    {
-      label: 'Suggestions',
-      path: '/suggestions',
-      icon: <Lightbulb className="w-4 h-4" />,
+      path:  '/genres',
+      icon:  <Tag className="w-4 h-4" />,
     },
     {
       label: 'Import Books',
       path:  '/books/import',
       icon:  <Upload className="w-4 h-4" />,
     },
-    
+    {
+      label: 'Add User',
+      path:  '/users/create',
+      icon:  <UserPlus className="w-4 h-4" />,
+    },
+    {
+      label: 'Suggestions',
+      path:  '/suggestions',
+      icon:  <Lightbulb className="w-4 h-4" />,
+    },
   ]
 
-  const adminLinks: NavLink[] = [
-  {
-    label: 'Libraries',
-    path:  '/admin/libraries',
-    icon:  <Building2 className="w-4 h-4" />,
-  },
-]
-
-  // Combine links based on role
   const navLinks: NavLink[] = [
-  ...commonLinks,
-  ...(isMember ? memberLinks : []),
-  ...(isLibrarian || isAdmin ? staffLinks : []),
-  ...(isAdmin ? adminLinks : []),
-]
+    ...commonLinks,
+    ...(isMember                    ? memberLinks : []),
+    ...(isLibrarian || isAdmin      ? staffLinks  : []),
+  ]
 
+  const roleColor = {
+    ADMIN:     'bg-red-100 text-red-700',
+    LIBRARIAN: 'bg-blue-100 text-blue-700',
+    MEMBER:    'bg-green-100 text-green-700',
+  }
 
-
-  // =========================================================================
-  // RENDER
-  // =========================================================================
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -156,24 +129,34 @@ const Navbar: React.FC = () => {
           {/* Logo */}
           <Link
             to="/dashboard"
-            className="flex items-center gap-2 font-bold text-xl text-blue-600"
+            className="flex items-center gap-2 flex-shrink-0"
           >
-            <BookOpen className="w-6 h-6" />
-            <span>LibraryMS</span>
+            <div className="w-9 h-9 bg-blue-600 rounded-xl
+                            flex items-center justify-center">
+              <BookOpen className="w-5 h-5 text-white" />
+            </div>
+            <div className="hidden sm:block">
+              <p className="font-bold text-gray-900 text-sm leading-none">
+                ASOME Library
+              </p>
+              <p className="text-xs text-gray-500 leading-none mt-0.5">
+                Management System
+              </p>
+            </div>
           </Link>
 
-          {/* Desktop nav links */}
-          <div className="hidden md:flex items-center gap-1">
+          {/* Desktop nav */}
+          <div className="hidden lg:flex items-center gap-1 overflow-x-auto">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
                 className={`
                   flex items-center gap-1.5 px-3 py-2 rounded-lg
-                  text-sm font-medium transition-colors duration-150
+                  text-xs font-medium whitespace-nowrap transition-colors
                   ${isActive(link.path)
                     ? 'bg-blue-50 text-blue-600'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    : 'text-gray-600 hover:bg-gray-100'
                   }
                 `}
               >
@@ -183,55 +166,71 @@ const Navbar: React.FC = () => {
             ))}
           </div>
 
-          {/* Right side — user dropdown */}
-          <div className="hidden md:flex items-center gap-3">
+          {/* User dropdown */}
+          <div className="hidden lg:flex items-center">
             <div className="relative">
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg
-                           hover:bg-gray-100 transition-colors duration-150"
+                className="flex items-center gap-2 px-3 py-2
+                           rounded-lg hover:bg-gray-100 transition-colors"
               >
-                {/* Avatar — show profile picture or initials */}
-<div className="w-8 h-8 rounded-full bg-blue-600
-                flex items-center justify-center
-                overflow-hidden flex-shrink-0">
-  {(user as any)?.profile_picture_url ? (
-    <img
-      src={(user as any).profile_picture_url}
-      alt="Profile"
-      className="w-full h-full object-cover"
-    />
-  ) : (
-    <span className="text-white text-sm font-semibold">
-      {user?.first_name?.[0] || user?.username?.[0] || 'U'}
-    </span>
-  )}
-</div>
+                {/* Avatar */}
+                <div className="w-8 h-8 rounded-full bg-blue-600
+                                flex items-center justify-center
+                                overflow-hidden flex-shrink-0">
+                  {user?.profile_picture_url ? (
+                    <img
+                      src={user.profile_picture_url}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-white text-sm font-semibold">
+                      {user?.first_name?.[0] || user?.username?.[0] || 'U'}
+                    </span>
+                  )}
+                </div>
+
+                <div className="text-left">
+                  <p className="text-sm font-medium text-gray-900
+                                leading-none">
+                    {user?.first_name || user?.username}
+                  </p>
+                  {user?.role && (
+                    <span className={`text-xs px-1.5 py-0.5 rounded-full
+                                     font-medium
+                                     ${roleColor[user.role]}`}>
+                      {user.role}
+                    </span>
+                  )}
+                </div>
 
                 <ChevronDown className="w-4 h-4 text-gray-400" />
               </button>
 
-              {/* Dropdown menu */}
+              {/* Dropdown */}
               {dropdownOpen && (
-                <div className="absolute right-0 mt-1 w-48 bg-white
-                                rounded-xl shadow-lg border border-gray-200
-                                py-1 z-50">
+                <div
+                  className="absolute right-0 mt-1 w-48 bg-white
+                             rounded-xl shadow-lg border border-gray-200
+                             py-1 z-50"
+                  onMouseLeave={() => setDropdownOpen(false)}
+                >
                   <Link
                     to="/profile"
                     onClick={() => setDropdownOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2 text-sm
-                               text-gray-700 hover:bg-gray-50"
+                    className="flex items-center gap-2 px-4 py-2
+                               text-sm text-gray-700 hover:bg-gray-50"
                   >
                     <User className="w-4 h-4" />
                     My Profile
                   </Link>
-
                   <hr className="my-1 border-gray-100" />
-
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-2 px-4 py-2 text-sm
-                               text-red-600 hover:bg-red-50 w-full text-left"
+                    className="flex items-center gap-2 px-4 py-2
+                               text-sm text-red-600 hover:bg-red-50
+                               w-full text-left"
                   >
                     <LogOut className="w-4 h-4" />
                     Logout
@@ -243,7 +242,7 @@ const Navbar: React.FC = () => {
 
           {/* Mobile hamburger */}
           <button
-            className="md:hidden p-2 rounded-lg hover:bg-gray-100"
+            className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
             onClick={() => setMobileOpen(!mobileOpen)}
           >
             {mobileOpen
@@ -257,7 +256,9 @@ const Navbar: React.FC = () => {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-gray-200 bg-white px-4 py-3">
+        <div className="lg:hidden border-t border-gray-200
+                        bg-white px-4 py-3 max-h-96
+                        overflow-y-auto">
           <div className="flex flex-col gap-1">
             {navLinks.map((link) => (
               <Link
@@ -280,10 +281,22 @@ const Navbar: React.FC = () => {
 
             <hr className="my-2 border-gray-100" />
 
+            <Link
+              to="/profile"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-2 px-3 py-2.5
+                         rounded-lg text-sm text-gray-600
+                         hover:bg-gray-100"
+            >
+              <User className="w-4 h-4" />
+              My Profile
+            </Link>
+
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 px-3 py-2.5 rounded-lg
-                         text-sm font-medium text-red-600 hover:bg-red-50"
+              className="flex items-center gap-2 px-3 py-2.5
+                         rounded-lg text-sm text-red-600
+                         hover:bg-red-50 w-full text-left"
             >
               <LogOut className="w-4 h-4" />
               Logout

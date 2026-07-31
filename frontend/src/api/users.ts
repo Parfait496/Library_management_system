@@ -1,48 +1,77 @@
-// users.ts — user and members API calls
-
 import api from './axios'
-import { User, PaginatedResponse } from '../types'
+import { User, CreateUserData, PaginatedResponse } from '../types'
 
-// Get all members — librarian/admin only
-export const getMembersApi = async (params?: {
+// Create user — admin creates librarians, librarian creates members
+export const createUserApi = async (
+  data: CreateUserData
+): Promise<User> => {
+  const response = await api.post<User>('/users/create/', data)
+  return response.data
+}
+
+// Get all users (admin sees all, librarian sees members only)
+export const getUsersApi = async (params?: {
   search?: string
-  page?: number
+  role?:   string
+  page?:   number
 }): Promise<PaginatedResponse<User>> => {
   const response = await api.get<PaginatedResponse<User>>(
-    '/users/members/',
-    { params }
+    '/users/', { params }
   )
   return response.data
 }
 
-// Get single member detail
-export const getMemberApi = async (id: number): Promise<User> => {
-  const response = await api.get<User>(`/users/members/${id}/`)
+// Alias for dashboard — gets members specifically
+export const getMembersApi = async (params?: {
+  search?: string
+  page?:   number
+}): Promise<PaginatedResponse<User>> => {
+  return getUsersApi({ ...params, role: 'MEMBER' })
+}
+
+// Get single user
+export const getUserApi = async (id: number): Promise<User> => {
+  const response = await api.get<User>(`/users/${id}/`)
   return response.data
+}
+
+// Alias used in MemberDetail page
+export const getMemberApi = async (id: number): Promise<User> => {
+  return getUserApi(id)
+}
+
+// Update user
+export const updateUserApi = async (
+  id:   number,
+  data: Partial<User>
+): Promise<User> => {
+  const response = await api.patch<User>(`/users/${id}/`, data)
+  return response.data
+}
+
+// Delete user (admin only)
+export const deleteUserApi = async (id: number): Promise<void> => {
+  await api.delete(`/users/${id}/`)
 }
 
 // Update own profile
 export const updateProfileApi = async (
-  data: Partial<User>
+  data: FormData | Partial<User>
 ): Promise<User> => {
-  const response = await api.patch<User>('/users/profile/', data)
+  const isFormData = data instanceof FormData
+  const response = await api.patch<User>('/users/profile/', data, {
+    headers: isFormData
+      ? { 'Content-Type': 'multipart/form-data' }
+      : { 'Content-Type': 'application/json' },
+  })
   return response.data
 }
 
-// Change password
+// Change own password
 export const changePasswordApi = async (data: {
-  old_password: string
-  new_password: string
+  old_password:  string
+  new_password:  string
   new_password2: string
 }): Promise<void> => {
   await api.post('/users/change-password/', data)
-}
-
-export const joinLibraryApi = async (
-  joinCode: string
-): Promise<any> => {
-  const response = await api.post('/libraries/join/', {
-    join_code: joinCode
-  })
-  return response.data
 }

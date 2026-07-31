@@ -1,20 +1,12 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios'
-import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY } from '../utils/constants'
-
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api'
-
-// Log URL so we can debug in browser console
-console.log('🔗 API URL:', API_BASE_URL)
+import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, API_BASE_URL } from '../utils/constants'
 
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  // Important for CORS
-  withCredentials: false,
+  headers: { 'Content-Type': 'application/json' },
 })
 
+// Attach JWT token to every request
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem(ACCESS_TOKEN_KEY)
@@ -26,6 +18,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
+// Auto-refresh token on 401
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -33,26 +26,22 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
-
       try {
-        const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY)
-        if (!refreshToken) throw new Error('No refresh token')
+        const refresh = localStorage.getItem(REFRESH_TOKEN_KEY)
+        if (!refresh) throw new Error('No refresh token')
 
-        const response = await axios.post(
+        const res = await axios.post(
           `${API_BASE_URL}/auth/refresh/`,
-          { refresh: refreshToken }
+          { refresh }
         )
-
-        const newAccessToken = response.data.access
-        localStorage.setItem(ACCESS_TOKEN_KEY, newAccessToken)
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
+        const newToken = res.data.access
+        localStorage.setItem(ACCESS_TOKEN_KEY, newToken)
+        originalRequest.headers.Authorization = `Bearer ${newToken}`
         return api(originalRequest)
-
-      } catch (refreshError) {
+      } catch {
         localStorage.removeItem(ACCESS_TOKEN_KEY)
         localStorage.removeItem(REFRESH_TOKEN_KEY)
         window.location.href = '/login'
-        return Promise.reject(refreshError)
       }
     }
 
@@ -61,4 +50,3 @@ api.interceptors.response.use(
 )
 
 export default api
-export { API_BASE_URL }

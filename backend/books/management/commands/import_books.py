@@ -12,7 +12,6 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('csv_file', type=str, help='Path to CSV file')
-        parser.add_argument('--library', type=str, default=None, help='Library slug')
 
     def handle(self, *args, **options):
         csv_path = options['csv_file']
@@ -30,11 +29,26 @@ class Command(BaseCommand):
 
             for row in reader:
                 try:
-                    # Get or create genre
+                    # Get or create genre, with optional parent category
+                    # CSV can provide:
+                    #   category = top-level, e.g. "Medical Sciences"
+                    #   genre    = subcategory, e.g. "Anatomy"
                     genre = None
-                    if row.get('genre'):
+                    genre_name    = (row.get('genre') or '').strip()
+                    category_name = (row.get('category') or '').strip()
+
+                    if genre_name:
+                        parent = None
+                        if category_name:
+                            parent, _ = Genre.objects.get_or_create(
+                                name=category_name, parent=None
+                            )
                         genre, _ = Genre.objects.get_or_create(
-                            name=row['genre'].strip()
+                            name=genre_name, parent=parent
+                        )
+                    elif category_name:
+                        genre, _ = Genre.objects.get_or_create(
+                            name=category_name, parent=None
                         )
 
                     # Skip if ISBN already exists

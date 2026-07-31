@@ -10,11 +10,11 @@ class CustomUserAdmin(UserAdmin):
     search_fields = ('username', 'email')
 
     fieldsets = UserAdmin.fieldsets + (
-        ('Library Info', {
+        ('Profile Info', {
             'fields': (
                 'role', 'phone_number',
                 'address', 'date_of_birth',
-                'profile_picture', 'is_verified',
+                'profile_picture',
                 'email_verified', 'email_verification_token',
             )
         }),

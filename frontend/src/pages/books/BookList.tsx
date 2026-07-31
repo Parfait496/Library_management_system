@@ -12,38 +12,53 @@ const BookList: React.FC = () => {
   const navigate = useNavigate()
   const { isLibrarian, isAdmin } = useAuth()
 
-  const [books, setBooks]         = useState<Book[]>([])
-  const [genres, setGenres]       = useState<Genre[]>([])
-  const [loading, setLoading]     = useState(true)
-  const [search, setSearch]       = useState('')
-  const [selectedGenre, setSelectedGenre] = useState<string>('')
+  const [books, setBooks]           = useState<Book[]>([])
+  // Top-level categories, each with .subcategories nested
+  const [categories, setCategories] = useState<Genre[]>([])
+  const [loading, setLoading]       = useState(true)
+  const [search, setSearch]         = useState('')
+  const [selectedCategory, setSelectedCategory] = useState<string>('')
+  const [selectedGenre, setSelectedGenre]       = useState<string>('')
   const [totalCount, setTotalCount] = useState(0)
+
+  const subcategoriesForSelected =
+    categories.find(c => c.id.toString() === selectedCategory)
+      ?.subcategories ?? []
 
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
       const [booksData, genresData] = await Promise.all([
         getBooksApi({
-          search: search || undefined,
-          genre: selectedGenre ? Number(selectedGenre) : undefined,
+          search:   search || undefined,
+          // If a subcategory is picked, filter to exactly that.
+          // Otherwise, if only a category is picked, filter to
+          // any book under any of its subcategories.
+          genre:    selectedGenre ? Number(selectedGenre) : undefined,
+          category: (!selectedGenre && selectedCategory)
+            ? Number(selectedCategory) : undefined,
         }),
-        getGenresApi(),
+        getGenresApi({ top_level: true }),
       ])
       setBooks(booksData.results)
       setTotalCount(booksData.count)
-      // genresData is always an array now
-      setGenres(Array.isArray(genresData) ? genresData : [])
+      setCategories(genresData)
     } catch (err) {
       console.error('Failed to load books:', err)
     } finally {
       setLoading(false)
     }
-  }, [search, selectedGenre])
+  }, [search, selectedCategory, selectedGenre])
 
   useEffect(() => {
     const timer = setTimeout(() => { loadData() }, 400)
     return () => clearTimeout(timer)
   }, [loadData])
+
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedCategory(e.target.value)
+    setSelectedGenre('') // reset subcategory when category changes
+  }
 
   return (
     <div>
@@ -83,14 +98,32 @@ const BookList: React.FC = () => {
           <Filter className="absolute left-3 top-1/2 -translate-y-1/2
                              w-4 h-4 text-gray-400" />
           <select
-            value={selectedGenre}
-            onChange={(e) => setSelectedGenre(e.target.value)}
+            value={selectedCategory}
+            onChange={handleCategoryChange}
             className="input-field pl-9 pr-8 w-full sm:w-48"
           >
-            <option value="">All Genres</option>
-            {genres.map((genre) => (
-              <option key={genre.id} value={genre.id}>
-                {genre.name}
+            <option value="">All Categories</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="relative">
+          <select
+            value={selectedGenre}
+            onChange={(e) => setSelectedGenre(e.target.value)}
+            className="input-field pr-8 w-full sm:w-48"
+            disabled={!selectedCategory}
+          >
+            <option value="">
+              {selectedCategory ? 'All Subcategories' : 'Pick category first'}
+            </option>
+            {subcategoriesForSelected.map((sub) => (
+              <option key={sub.id} value={sub.id}>
+                {sub.name}
               </option>
             ))}
           </select>
@@ -171,8 +204,9 @@ const BookCard: React.FC<BookCardProps> = ({ book, onClick }) => (
       </h3>
       <p className="text-sm text-gray-500 mb-3">by {book.author}</p>
       <div className="flex items-center justify-between flex-wrap gap-1">
-        {book.genre_name && (
-          <Badge variant="info">{book.genre_name}</Badge>
+        {/* genre_full_path e.g. "Medical Sciences > Anatomy" */}
+        {book.genre_full_path && (
+          <Badge variant="info">{book.genre_full_path}</Badge>
         )}
         {book.is_available ? (
           <Badge variant="success">{book.availability_status}</Badge>

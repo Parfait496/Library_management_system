@@ -3,9 +3,23 @@ from .models import Book, Genre, BookSuggestion
 
 
 class GenreSerializer(serializers.ModelSerializer):
+    subcategories = serializers.SerializerMethodField()   # ← NEW
+    full_path     = serializers.CharField(read_only=True) # ← NEW
+    parent_name   = serializers.CharField(                # ← NEW
+        source='parent.name', read_only=True, default=None
+    )
+
     class Meta:
         model  = Genre
-        fields = ('id', 'name', 'description')
+        fields = (
+            'id', 'name', 'description',
+            'parent', 'parent_name',           # ← parent, parent_name NEW
+            'full_path', 'subcategories',      # ← NEW
+        )
+
+    def get_subcategories(self, obj):
+        children = obj.subcategories.all().order_by('name')
+        return GenreSerializer(children, many=True, context=self.context).data
 
 
 class BookSerializer(serializers.ModelSerializer):
@@ -13,6 +27,9 @@ class BookSerializer(serializers.ModelSerializer):
     Serializer for Book model.
     cover_image_url returns full absolute URL for the image.
     """
+    genre_full_path = serializers.CharField(
+        source='genre.full_path', read_only=True, default=None
+    )
     is_available        = serializers.SerializerMethodField()
     availability_status = serializers.SerializerMethodField()
     genre_name          = serializers.CharField(
@@ -24,7 +41,7 @@ class BookSerializer(serializers.ModelSerializer):
         model  = Book
         fields = (
             'id', 'isbn', 'title', 'author', 'publisher',
-            'publication_year', 'genre', 'genre_name',
+            'publication_year', 'genre', 'genre_name', 'genre_full_path',
             'description', 'total_copies', 'available_copies',
             'cover_image', 'cover_image_url',
             'is_available', 'availability_status', 'created_at',
