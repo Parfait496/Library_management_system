@@ -2,10 +2,9 @@ import React, { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import {
   BookOpen, LayoutDashboard, Clock,
-  Users, BookPlus, ClipboardList,
+  Users, ClipboardList,
   DollarSign, LogOut, User, Menu,
-  X, ChevronDown, Tag, Upload,
-  Lightbulb, UserPlus,
+  X, ChevronDown, Lightbulb,
 } from 'lucide-react'
 import useAuth from '../../hooks/useAuth'
 
@@ -66,12 +65,10 @@ const Navbar: React.FC = () => {
   ]
 
   // Staff links — librarian and admin
+  // NOTE: "Add Book", "Import Books", and "Genres" now live as buttons
+  // on the Books page (/books) instead of separate nav items.
+  // "Add User" now lives as a button on the Members page (/members).
   const staffLinks: NavLink[] = [
-    {
-      label: 'Add Book',
-      path:  '/books/add',
-      icon:  <BookPlus className="w-4 h-4" />,
-    },
     {
       label: 'Requests',
       path:  '/borrow-requests',
@@ -86,21 +83,6 @@ const Navbar: React.FC = () => {
       label: 'Fines',
       path:  '/fines',
       icon:  <DollarSign className="w-4 h-4" />,
-    },
-    {
-      label: 'Genres',
-      path:  '/genres',
-      icon:  <Tag className="w-4 h-4" />,
-    },
-    {
-      label: 'Import Books',
-      path:  '/books/import',
-      icon:  <Upload className="w-4 h-4" />,
-    },
-    {
-      label: 'Add User',
-      path:  '/users/create',
-      icon:  <UserPlus className="w-4 h-4" />,
     },
     {
       label: 'Suggestions',

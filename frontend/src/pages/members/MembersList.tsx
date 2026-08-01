@@ -1,14 +1,16 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, Users, Eye } from 'lucide-react'
+import { Search, Users, Eye, UserPlus } from 'lucide-react'
 import { getMembersApi } from '../../api/users'
 import { User } from '../../types'
+import useAuth from '../../hooks/useAuth'
 import Button from '../../components/ui/Button'
 import Spinner from '../../components/ui/Spinner'
 import { formatDate } from '../../utils/helpers'
 
 const MembersList: React.FC = () => {
   const navigate = useNavigate()
+  const { isAdmin, isLibrarian } = useAuth()
   const [members, setMembers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch]   = useState('')
@@ -43,6 +45,12 @@ const MembersList: React.FC = () => {
             {total} member{total !== 1 ? 's' : ''} registered
           </p>
         </div>
+        {(isAdmin || isLibrarian) && (
+          <Button onClick={() => navigate('/users/create')}>
+            <UserPlus className="w-4 h-4" />
+            Add User
+          </Button>
+        )}
       </div>
 
       {/* Search */}

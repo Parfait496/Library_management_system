@@ -92,8 +92,8 @@ class BorrowRecord(models.Model):
     
     @property
     def fine_amount(self):
-        FINE_PER_DAY = 100
-        return self.days_overdue * FINE_PER_DAY
+        from core.fine_config import calculate_fine
+        return calculate_fine(self.days_overdue)
     
 
     def approve(self, librarian):
@@ -109,7 +109,9 @@ class BorrowRecord(models.Model):
         self.librarian_note = note
         self.save()
 
-    def mark_borrowed(self, borrow_days=14):
+    def mark_borrowed(self):
+        from core.fine_config import BORROW_PERIOD_DAYS
+        borrow_days = BORROW_PERIOD_DAYS
         """
         Called when the member picks up the book.
         Decreases available_copies on the book.

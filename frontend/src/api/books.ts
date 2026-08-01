@@ -10,7 +10,7 @@ export const getBooksApi = async (params?: {
   ordering?:  string
 }): Promise<PaginatedResponse<Book>> => {
   const response = await api.get<PaginatedResponse<Book>>(
-    '/books/', { params }
+    '/books/', { params: { page_size: 100, ...params }  }
   )
   return response.data
 }

@@ -205,7 +205,7 @@ const Landing: React.FC = () => {
                 cursor:       'pointer',
               }}
             >
-              Student Login
+              Library Login
             </button>
           </div>
 
@@ -751,7 +751,7 @@ const Landing: React.FC = () => {
               }}
             >
               From Gray's Anatomy to Harrison's Principles —
-              find, reserve, and return books without leaving your seat.
+              find, reserve, and return books without spendign your time.
             </p>
           </div>
 
@@ -838,8 +838,8 @@ const Landing: React.FC = () => {
               '📰 Journals & Periodicals',
               '💰 Fine Tracking',
               '📊 Borrowing History',
-              '🔔 Status Notifications',
-              '📥 CSV Book Import',
+              
+              
             ].map(pill => (
               <span
                 key={pill}
@@ -1072,101 +1072,32 @@ const Landing: React.FC = () => {
           </div>
 
           {/* Role cards */}
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {[
-              {
-                role:  'Student / Member',
-                emoji: '🎓',
-                color: '#2E86AB',
-                bg:    '#dceef5',
-                perks: [
-                  'Search and browse all books',
-                  'Reserve and borrow books',
-                  'Track loans and due dates',
-                  'Suggest books to acquire',
-                ],
-              },
-              {
-                role:  'Librarian',
-                emoji: '📚',
-                color: '#1B4F72',
-                bg:    '#d0e8f7',
-                perks: [
-                  'Approve borrow requests',
-                  'Manage book catalogue',
-                  'Track overdue returns',
-                  'Manage fines',
-                ],
-              },
-              {
-                role:  'Administrator',
-                emoji: '🛡️',
-                color: '#C0392B',
-                bg:    '#fde8e6',
-                perks: [
-                  'Full system access',
-                  'Manage all users and roles',
-                  'View system analytics',
-                  'Import books via CSV',
-                ],
-              },
-            ].map((card, i) => (
+              { emoji: '🔍', text: 'Search thousands of medical books and journals' },
+              { emoji: '📖', text: 'Reserve books online and pick them up at the desk' },
+              { emoji: '📅', text: 'Track your loans, due dates, and return status' },
+              { emoji: '💡', text: 'Suggest new books for the library to acquire' },
+              { emoji: '💰', text: 'View and track any outstanding fines' },
+              { emoji: '📚', text: 'Access Gray\'s Anatomy, Harrison\'s, Robbins, and more' },
+            ].map((item, i) => (
               <div
                 key={i}
                 style={{
-                  background:   'white',
-                  borderRadius: '14px',
-                  padding:      '18px 20px',
-                  border:       '1px solid #e4eef3',
-                  display:      'flex',
-                  gap:          '14px',
-                  alignItems:   'flex-start',
+                  display:    'flex',
+                  alignItems: 'center',
+                  gap:        '14px',
+                  background: 'white',
+                  borderRadius: '12px',
+                  padding:    '14px 18px',
+                  border:     '1px solid #e4eef3',
                 }}
               >
-                <div
-                  style={{
-                    width:          '40px',
-                    height:         '40px',
-                    borderRadius:   '10px',
-                    background:     card.bg,
-                    display:        'flex',
-                    alignItems:     'center',
-                    justifyContent: 'center',
-                    fontSize:       '20px',
-                    flexShrink:     0,
-                  }}
-                >
-                  {card.emoji}
-                </div>
-                <div>
-                  <div
-                    style={{
-                      fontSize:    '14px',
-                      fontWeight:  700,
-                      color:       card.color,
-                      marginBottom:'6px',
-                    }}
-                  >
-                    {card.role}
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                    {card.perks.map((perk, j) => (
-                      <span
-                        key={j}
-                        style={{
-                          fontSize:     '11px',
-                          color:        '#5a7a8a',
-                          background:   '#f0f7f9',
-                          padding:      '3px 8px',
-                          borderRadius: '100px',
-                          border:       '1px solid #dce8ef',
-                        }}
-                      >
-                        {perk}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+                <span style={{ fontSize: '20px', flexShrink: 0 }}>{item.emoji}</span>
+                <span style={{ fontSize: '14px', color: '#3a5a6a', lineHeight: 1.4 }}>
+                  {item.text}
+                </span>
               </div>
             ))}
           </div>
@@ -1248,7 +1179,7 @@ const Landing: React.FC = () => {
               }}
             >
               <BookOpen size={16} />
-              Student Login
+              Library Login
             </button>
           </div>
         </div>
@@ -1341,7 +1272,7 @@ const Landing: React.FC = () => {
                   Quick Access
                 </div>
                 {[
-                  { label: 'Student Login', path: '/login' },
+                  { label: 'Library Login', path: '/login' },
                   { label: 'Book Catalogue', path: '/login' },
                   { label: 'My Borrows', path: '/login' },
                   { label: 'Suggest a Book', path: '/login' },
