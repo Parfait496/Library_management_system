@@ -1,0 +1,773 @@
+[
+{
+  "model": "users.historicaluser",
+  "pk": 1,
+  "fields": {
+    "id": 1,
+    "password": "pbkdf2_sha256$600000$UQxNttr13Kz6e5aHsrQPMF$LfrKVl8yaz7+BpM2KVu3/u56sD3WD0peCAbtHkbRlwk=",
+    "last_login": "2026-07-30T08:59:38Z",
+    "is_superuser": true,
+    "username": "Parfait",
+    "first_name": "Ndizihiwe",
+    "last_name": "Parfait",
+    "email": "ndizihiwep@asome.health",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2026-07-30T08:58:41Z",
+    "role": "ADMIN",
+    "phone_number": "+250790090017",
+    "address": "Masoro\r\nKalisimbi road to Nyamagumba",
+    "date_of_birth": null,
+    "email_verified": false,
+    "email_verification_token": null,
+    "student_id": null,
+    "profile_picture": "profile_pictures/WhatsApp_Image_2026-07-22_at_19.04.07.jpeg",
+    "created_at": "2026-07-30T08:58:43.321Z",
+    "updated_at": "2026-08-02T11:23:14.076Z",
+    "history_date": "2026-08-02T11:23:14.082Z",
+    "history_change_reason": null,
+    "history_type": "~",
+    "history_user": 1
+  }
+},
+{
+  "model": "users.user",
+  "pk": 1,
+  "fields": {
+    "password": "pbkdf2_sha256$600000$UQxNttr13Kz6e5aHsrQPMF$LfrKVl8yaz7+BpM2KVu3/u56sD3WD0peCAbtHkbRlwk=",
+    "last_login": "2026-07-30T08:59:38Z",
+    "is_superuser": true,
+    "username": "Parfait",
+    "first_name": "Ndizihiwe",
+    "last_name": "Parfait",
+    "email": "ndizihiwep@asome.health",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2026-07-30T08:58:41Z",
+    "role": "ADMIN",
+    "phone_number": "+250790090017",
+    "address": "Masoro\r\nKalisimbi road to Nyamagumba",
+    "date_of_birth": null,
+    "email_verified": false,
+    "email_verification_token": null,
+    "student_id": null,
+    "profile_picture": "profile_pictures/WhatsApp_Image_2026-07-22_at_19.04.07.jpeg",
+    "created_at": "2026-07-30T08:58:43.321Z",
+    "updated_at": "2026-08-02T11:23:14.076Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "users.user",
+  "pk": 2,
+  "fields": {
+    "password": "pbkdf2_sha256$600000$27eaPdB6eSfcJvUVikt0c9$/diD99cPcEvYWly/bVGByboyzZq1nHkWlh65URjwMzU=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "Scot",
+    "first_name": "Scot",
+    "last_name": "Adkins",
+    "email": "parfaitndizihiwe@gmail.com",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-07-31T07:41:46.016Z",
+    "role": "MEMBER",
+    "phone_number": "",
+    "address": "",
+    "date_of_birth": null,
+    "email_verified": false,
+    "email_verification_token": null,
+    "student_id": "",
+    "profile_picture": "",
+    "created_at": "2026-07-31T07:41:47.316Z",
+    "updated_at": "2026-07-31T07:41:47.316Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "users.user",
+  "pk": 3,
+  "fields": {
+    "password": "pbkdf2_sha256$600000$u71Cvfn5H3vAjdaeqJGr2F$4Ud9Z9JfRmN4od+5LVw4UZuu4cfYVvvQpJhiMTu8J+Y=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "Samuel",
+    "first_name": "Didier",
+    "last_name": "Sam",
+    "email": "Samuel@asome.com",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-07-31T07:45:25.333Z",
+    "role": "MEMBER",
+    "phone_number": "",
+    "address": "",
+    "date_of_birth": null,
+    "email_verified": false,
+    "email_verification_token": null,
+    "student_id": "",
+    "profile_picture": "",
+    "created_at": "2026-07-31T07:45:26.277Z",
+    "updated_at": "2026-07-31T07:45:26.277Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "users.user",
+  "pk": 4,
+  "fields": {
+    "password": "pbkdf2_sha256$600000$7xtw748Hsi5vNooheIbd1j$3ZfKB/u2m/qPPkMm5+0Niw2u4jyCxIXXLp2pYPROo1w=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "johndoe",
+    "first_name": "John",
+    "last_name": "Doe",
+    "email": "john@asome.ac",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-07-31T07:49:07.605Z",
+    "role": "MEMBER",
+    "phone_number": "",
+    "address": "",
+    "date_of_birth": null,
+    "email_verified": false,
+    "email_verification_token": null,
+    "student_id": "",
+    "profile_picture": "",
+    "created_at": "2026-07-31T07:49:08.733Z",
+    "updated_at": "2026-07-31T07:49:08.733Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "books.historicalgenre",
+  "pk": 1,
+  "fields": {
+    "id": 4,
+    "name": "Anatomy",
+    "description": null,
+    "created_at": "2026-07-31T11:53:50.331Z",
+    "parent": 2,
+    "history_date": "2026-08-02T11:42:03.264Z",
+    "history_change_reason": null,
+    "history_type": "-",
+    "history_user": 1
+  }
+},
+{
+  "model": "books.genre",
+  "pk": 1,
+  "fields": {
+    "name": "The clue",
+    "description": "",
+    "parent": null,
+    "created_at": "2026-07-30T09:00:35.384Z"
+  }
+},
+{
+  "model": "books.genre",
+  "pk": 2,
+  "fields": {
+    "name": "Fiction",
+    "description": null,
+    "parent": null,
+    "created_at": "2026-07-31T07:39:01.577Z"
+  }
+},
+{
+  "model": "books.genre",
+  "pk": 3,
+  "fields": {
+    "name": "Science Fiction",
+    "description": null,
+    "parent": null,
+    "created_at": "2026-07-31T07:39:01.640Z"
+  }
+},
+{
+  "model": "books.genre",
+  "pk": 5,
+  "fields": {
+    "name": "Philosophy",
+    "description": null,
+    "parent": null,
+    "created_at": "2026-08-01T07:59:02.628Z"
+  }
+},
+{
+  "model": "books.genre",
+  "pk": 6,
+  "fields": {
+    "name": "Self Help",
+    "description": null,
+    "parent": null,
+    "created_at": "2026-08-01T07:59:02.976Z"
+  }
+},
+{
+  "model": "books.genre",
+  "pk": 7,
+  "fields": {
+    "name": "Thriller",
+    "description": null,
+    "parent": null,
+    "created_at": "2026-08-01T07:59:03.686Z"
+  }
+},
+{
+  "model": "books.genre",
+  "pk": 8,
+  "fields": {
+    "name": "Mystery",
+    "description": null,
+    "parent": null,
+    "created_at": "2026-08-01T07:59:03.938Z"
+  }
+},
+{
+  "model": "books.genre",
+  "pk": 9,
+  "fields": {
+    "name": "Biography",
+    "description": null,
+    "parent": null,
+    "created_at": "2026-08-01T07:59:04.121Z"
+  }
+},
+{
+  "model": "books.genre",
+  "pk": 10,
+  "fields": {
+    "name": "Classic",
+    "description": null,
+    "parent": null,
+    "created_at": "2026-08-01T07:59:04.531Z"
+  }
+},
+{
+  "model": "books.genre",
+  "pk": 11,
+  "fields": {
+    "name": "African Literature",
+    "description": null,
+    "parent": null,
+    "created_at": "2026-08-01T07:59:04.730Z"
+  }
+},
+{
+  "model": "books.genre",
+  "pk": 12,
+  "fields": {
+    "name": "Young Adult",
+    "description": null,
+    "parent": null,
+    "created_at": "2026-08-01T07:59:05.263Z"
+  }
+},
+{
+  "model": "books.genre",
+  "pk": 13,
+  "fields": {
+    "name": "Dystopia",
+    "description": null,
+    "parent": null,
+    "created_at": "2026-08-01T07:59:05.502Z"
+  }
+},
+{
+  "model": "books.genre",
+  "pk": 14,
+  "fields": {
+    "name": "Psychology",
+    "description": null,
+    "parent": null,
+    "created_at": "2026-08-01T07:59:05.703Z"
+  }
+},
+{
+  "model": "books.historicalbook",
+  "pk": 1,
+  "fields": {
+    "id": 22,
+    "isbn": "9781476746586",
+    "title": "bh",
+    "author": "bg",
+    "publisher": "bg",
+    "publication_year": 2023,
+    "description": null,
+    "total_copies": 10,
+    "available_copies": 10,
+    "cover_image": "",
+    "created_at": "2026-08-02T10:17:59.106Z",
+    "updated_at": "2026-08-02T10:17:59.106Z",
+    "genre": 4,
+    "added_by": 1,
+    "history_date": "2026-08-02T11:25:20.954Z",
+    "history_change_reason": null,
+    "history_type": "-",
+    "history_user": 1
+  }
+},
+{
+  "model": "books.historicalbook",
+  "pk": 2,
+  "fields": {
+    "id": 2,
+    "isbn": "9780743273565",
+    "title": "The Great Gatsby",
+    "author": "F. Scott Fitzgerald",
+    "publisher": "Scribner",
+    "publication_year": 1925,
+    "description": "A story of the fabulously wealthy Jay Gatsby",
+    "total_copies": 3,
+    "available_copies": 3,
+    "cover_image": "",
+    "created_at": "2026-07-31T07:39:01.596Z",
+    "updated_at": "2026-07-31T07:39:01.596Z",
+    "genre": 2,
+    "added_by": 1,
+    "history_date": "2026-08-02T11:26:34.592Z",
+    "history_change_reason": null,
+    "history_type": "-",
+    "history_user": 1
+  }
+},
+{
+  "model": "books.historicalbook",
+  "pk": 3,
+  "fields": {
+    "id": 7,
+    "isbn": "9781250301697",
+    "title": "Test Title Change",
+    "author": "James Clear",
+    "publisher": "Avery",
+    "publication_year": 2018,
+    "description": "How tiny changes can lead to remarkable results",
+    "total_copies": 3,
+    "available_copies": 3,
+    "cover_image": "",
+    "created_at": "2026-08-01T07:59:03.124Z",
+    "updated_at": "2026-08-02T11:36:34.276Z",
+    "genre": 6,
+    "added_by": 1,
+    "history_date": "2026-08-02T11:36:34.290Z",
+    "history_change_reason": null,
+    "history_type": "~",
+    "history_user": null
+  }
+},
+{
+  "model": "books.book",
+  "pk": 3,
+  "fields": {
+    "isbn": "9780061120084",
+    "title": "To Kill a Mockingbird",
+    "author": "Harper Lee",
+    "publisher": "HarperCollins",
+    "publication_year": 1960,
+    "genre": 2,
+    "description": "The unforgettable novel of a childhood in a sleepy Southern town",
+    "total_copies": 2,
+    "available_copies": 2,
+    "cover_image": "",
+    "added_by": 1,
+    "created_at": "2026-07-31T07:39:01.619Z",
+    "updated_at": "2026-08-01T08:17:38.967Z"
+  }
+},
+{
+  "model": "books.book",
+  "pk": 5,
+  "fields": {
+    "isbn": "9780316769174",
+    "title": "The Catcher in the Rye",
+    "author": "J.D. Salinger",
+    "publisher": "Little Brown",
+    "publication_year": 1951,
+    "genre": 2,
+    "description": "Story of Holden Caulfield navigating New York after being expelled",
+    "total_copies": 2,
+    "available_copies": 2,
+    "cover_image": "",
+    "added_by": 1,
+    "created_at": "2026-08-01T07:59:02.505Z",
+    "updated_at": "2026-08-01T07:59:02.505Z"
+  }
+},
+{
+  "model": "books.book",
+  "pk": 6,
+  "fields": {
+    "isbn": "9780062315007",
+    "title": "The Alchemist",
+    "author": "Paulo Coelho",
+    "publisher": "HarperOne",
+    "publication_year": 1988,
+    "genre": 5,
+    "description": "A shepherd boy journey to find treasure and his personal legend",
+    "total_copies": 5,
+    "available_copies": 5,
+    "cover_image": "",
+    "added_by": 1,
+    "created_at": "2026-08-01T07:59:02.773Z",
+    "updated_at": "2026-08-01T07:59:02.773Z"
+  }
+},
+{
+  "model": "books.book",
+  "pk": 7,
+  "fields": {
+    "isbn": "9781250301697",
+    "title": "Test Title Change",
+    "author": "James Clear",
+    "publisher": "Avery",
+    "publication_year": 2018,
+    "genre": 6,
+    "description": "How tiny changes can lead to remarkable results",
+    "total_copies": 3,
+    "available_copies": 3,
+    "cover_image": "",
+    "added_by": 1,
+    "created_at": "2026-08-01T07:59:03.124Z",
+    "updated_at": "2026-08-02T11:36:34.276Z"
+  }
+},
+{
+  "model": "books.book",
+  "pk": 8,
+  "fields": {
+    "isbn": "9780735224292",
+    "title": "Little Fires Everywhere",
+    "author": "Celeste Ng",
+    "publisher": "Penguin Press",
+    "publication_year": 2017,
+    "genre": 2,
+    "description": "A story about the Richardsons and the Warrens in a perfect suburb",
+    "total_copies": 2,
+    "available_copies": 2,
+    "cover_image": "",
+    "added_by": 1,
+    "created_at": "2026-08-01T07:59:03.271Z",
+    "updated_at": "2026-08-01T07:59:03.271Z"
+  }
+},
+{
+  "model": "books.book",
+  "pk": 9,
+  "fields": {
+    "isbn": "9780525559474",
+    "title": "The Midnight Library",
+    "author": "Matt Haig",
+    "publisher": "Viking",
+    "publication_year": 2020,
+    "genre": 2,
+    "description": "A library between life and death where every book is a different life",
+    "total_copies": 4,
+    "available_copies": 4,
+    "cover_image": "",
+    "added_by": 1,
+    "created_at": "2026-08-01T07:59:03.441Z",
+    "updated_at": "2026-08-01T07:59:03.441Z"
+  }
+},
+{
+  "model": "books.book",
+  "pk": 10,
+  "fields": {
+    "isbn": "9781501156700",
+    "title": "The Silent Patient",
+    "author": "Alex Michaelides",
+    "publisher": "Celadon Books",
+    "publication_year": 2019,
+    "genre": 7,
+    "description": "A famous painter shoots her husband five times and then never speaks again",
+    "total_copies": 3,
+    "available_copies": 3,
+    "cover_image": "",
+    "added_by": 1,
+    "created_at": "2026-08-01T07:59:03.838Z",
+    "updated_at": "2026-08-01T07:59:03.838Z"
+  }
+},
+{
+  "model": "books.book",
+  "pk": 11,
+  "fields": {
+    "isbn": "9780525536291",
+    "title": "Where the Crawdads Sing",
+    "author": "Delia Owens",
+    "publisher": "Putnam",
+    "publication_year": 2018,
+    "genre": 8,
+    "description": "A woman who raised herself in the marshes of North Carolina",
+    "total_copies": 4,
+    "available_copies": 4,
+    "cover_image": "",
+    "added_by": 1,
+    "created_at": "2026-08-01T07:59:04.000Z",
+    "updated_at": "2026-08-01T07:59:04.000Z"
+  }
+},
+{
+  "model": "books.book",
+  "pk": 12,
+  "fields": {
+    "isbn": "9781476746586",
+    "title": "Educated",
+    "author": "Tara Westover",
+    "publisher": "Random House",
+    "publication_year": 2018,
+    "genre": 9,
+    "description": "A memoir about a woman who grows up in the mountains of Idaho",
+    "total_copies": 2,
+    "available_copies": 2,
+    "cover_image": "",
+    "added_by": 1,
+    "created_at": "2026-08-01T07:59:04.200Z",
+    "updated_at": "2026-08-01T07:59:04.200Z"
+  }
+},
+{
+  "model": "books.book",
+  "pk": 13,
+  "fields": {
+    "isbn": "9780735619128",
+    "title": "Gone Girl",
+    "author": "Gillian Flynn",
+    "publisher": "Crown Publishing",
+    "publication_year": 2012,
+    "genre": 7,
+    "description": "A woman disappears on her fifth wedding anniversary and her husband is suspect",
+    "total_copies": 3,
+    "available_copies": 3,
+    "cover_image": "",
+    "added_by": 1,
+    "created_at": "2026-08-01T07:59:04.376Z",
+    "updated_at": "2026-08-01T07:59:04.376Z"
+  }
+},
+{
+  "model": "books.book",
+  "pk": 14,
+  "fields": {
+    "isbn": "9780679720201",
+    "title": "Crime and Punishment",
+    "author": "Fyodor Dostoevsky",
+    "publisher": "Vintage",
+    "publication_year": 1866,
+    "genre": 10,
+    "description": "A poor student commits a crime and struggles with guilt and redemption",
+    "total_copies": 2,
+    "available_copies": 2,
+    "cover_image": "",
+    "added_by": 1,
+    "created_at": "2026-08-01T07:59:04.593Z",
+    "updated_at": "2026-08-01T07:59:04.593Z"
+  }
+},
+{
+  "model": "books.book",
+  "pk": 15,
+  "fields": {
+    "isbn": "9780140283297",
+    "title": "Things Fall Apart",
+    "author": "Chinua Achebe",
+    "publisher": "Anchor",
+    "publication_year": 1958,
+    "genre": 11,
+    "description": "The story of Okonkwo a leader in the Igbo community in Nigeria",
+    "total_copies": 4,
+    "available_copies": 4,
+    "cover_image": "",
+    "added_by": 1,
+    "created_at": "2026-08-01T07:59:04.809Z",
+    "updated_at": "2026-08-01T07:59:04.814Z"
+  }
+},
+{
+  "model": "books.book",
+  "pk": 16,
+  "fields": {
+    "isbn": "9780062409850",
+    "title": "The Martian",
+    "author": "Andy Weir",
+    "publisher": "Broadway Books",
+    "publication_year": 2011,
+    "genre": 3,
+    "description": "An astronaut stranded alone on Mars must find a way to survive",
+    "total_copies": 3,
+    "available_copies": 3,
+    "cover_image": "",
+    "added_by": 1,
+    "created_at": "2026-08-01T07:59:04.937Z",
+    "updated_at": "2026-08-01T07:59:04.937Z"
+  }
+},
+{
+  "model": "books.book",
+  "pk": 17,
+  "fields": {
+    "isbn": "9780525478812",
+    "title": "The Fault in Our Stars",
+    "author": "John Green",
+    "publisher": "Dutton Books",
+    "publication_year": 2012,
+    "genre": 12,
+    "description": "Two teenagers with cancer fall in love at a support group",
+    "total_copies": 2,
+    "available_copies": 2,
+    "cover_image": "",
+    "added_by": 1,
+    "created_at": "2026-08-01T07:59:05.341Z",
+    "updated_at": "2026-08-01T07:59:05.341Z"
+  }
+},
+{
+  "model": "books.book",
+  "pk": 18,
+  "fields": {
+    "isbn": "9780385490818",
+    "title": "The Handmaids Tale",
+    "author": "Margaret Atwood",
+    "publisher": "Anchor",
+    "publication_year": 1985,
+    "genre": 13,
+    "description": "A dystopian novel set in a near future totalitarian society",
+    "total_copies": 3,
+    "available_copies": 3,
+    "cover_image": "",
+    "added_by": 1,
+    "created_at": "2026-08-01T07:59:05.571Z",
+    "updated_at": "2026-08-01T07:59:05.571Z"
+  }
+},
+{
+  "model": "books.book",
+  "pk": 19,
+  "fields": {
+    "isbn": "9780062316097",
+    "title": "Becoming",
+    "author": "Michelle Obama",
+    "publisher": "Crown",
+    "publication_year": 2018,
+    "genre": 9,
+    "description": "The memoir of former US First Lady Michelle Obama",
+    "total_copies": 4,
+    "available_copies": 4,
+    "cover_image": "",
+    "added_by": 1,
+    "created_at": "2026-08-01T07:59:05.649Z",
+    "updated_at": "2026-08-01T07:59:05.649Z"
+  }
+},
+{
+  "model": "books.book",
+  "pk": 20,
+  "fields": {
+    "isbn": "9780374533557",
+    "title": "Thinking Fast and Slow",
+    "author": "Daniel Kahneman",
+    "publisher": "Farrar Straus",
+    "publication_year": 2011,
+    "genre": 14,
+    "description": "How two systems in our brain shape the way we think",
+    "total_copies": 2,
+    "available_copies": 2,
+    "cover_image": "",
+    "added_by": 1,
+    "created_at": "2026-08-01T07:59:05.770Z",
+    "updated_at": "2026-08-01T07:59:05.770Z"
+  }
+},
+{
+  "model": "books.book",
+  "pk": 21,
+  "fields": {
+    "isbn": "9780525559023",
+    "title": "Normal People",
+    "author": "Sally Rooney",
+    "publisher": "Faber and Faber",
+    "publication_year": 2018,
+    "genre": 2,
+    "description": "A relationship between two people from the west of Ireland",
+    "total_copies": 3,
+    "available_copies": 2,
+    "cover_image": "",
+    "added_by": 1,
+    "created_at": "2026-08-01T07:59:05.867Z",
+    "updated_at": "2026-08-01T10:19:45.007Z"
+  }
+},
+{
+  "model": "books.booksuggestion",
+  "pk": 1,
+  "fields": {
+    "suggested_by": 4,
+    "title": "The",
+    "author": "The",
+    "isbn": "0987654321234",
+    "reason": "There no",
+    "status": "APPROVED",
+    "admin_note": "",
+    "created_at": "2026-07-31T20:24:26.758Z",
+    "updated_at": "2026-07-31T20:25:31.784Z"
+  }
+},
+{
+  "model": "borrowing.borrowrecord",
+  "pk": 2,
+  "fields": {
+    "member": 4,
+    "book": 3,
+    "status": "RETURNED",
+    "request_date": "2026-07-31T08:10:23.853Z",
+    "approved_date": "2026-07-31T08:11:24.402Z",
+    "borrow_date": "2026-07-31T08:11:35.445Z",
+    "due_date": "2026-08-14",
+    "return_date": "2026-08-01T08:17:38.952Z",
+    "processed_by": 1,
+    "librarian_note": null,
+    "created_at": "2026-07-31T08:10:23.855Z",
+    "updated_at": "2026-08-01T08:17:38.952Z"
+  }
+},
+{
+  "model": "borrowing.borrowrecord",
+  "pk": 4,
+  "fields": {
+    "member": 4,
+    "book": 21,
+    "status": "RETURNED",
+    "request_date": "2026-08-01T09:14:46.162Z",
+    "approved_date": "2026-08-01T09:17:27.775Z",
+    "borrow_date": "2026-08-01T09:17:34.181Z",
+    "due_date": "2026-08-01",
+    "return_date": "2026-08-01T09:17:43.844Z",
+    "processed_by": 1,
+    "librarian_note": null,
+    "created_at": "2026-08-01T09:14:46.164Z",
+    "updated_at": "2026-08-01T09:17:43.844Z"
+  }
+},
+{
+  "model": "borrowing.borrowrecord",
+  "pk": 6,
+  "fields": {
+    "member": 4,
+    "book": 21,
+    "status": "BORROWED",
+    "request_date": "2026-08-01T10:19:22.751Z",
+    "approved_date": "2026-08-01T10:19:40.545Z",
+    "borrow_date": "2026-08-01T10:19:44.991Z",
+    "due_date": "2026-08-11",
+    "return_date": null,
+    "processed_by": 1,
+    "librarian_note": null,
+    "created_at": "2026-08-01T10:19:22.752Z",
+    "updated_at": "2026-08-01T10:19:44.991Z"
+  }
+}
+]

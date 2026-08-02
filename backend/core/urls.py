@@ -3,17 +3,16 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.http import JsonResponse
-from core.fine_config import get_fine_summary
+from core.export_views import DatabaseSnapshotExportAPIView
+from core.backup_views import BackupListCreateAPIView, BackupDownloadAPIView
+from core.history_views import ActivityLogAPIView, ActivityLogExportAPIView
+
 
 def health_check(request):
     return JsonResponse({
         'status': 'ok',
         'system': 'ASOME Library Management System'
     })
-
-def fine_config_view(request):
-    from django.http import JsonResponse
-    return JsonResponse(get_fine_summary())
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -22,8 +21,12 @@ urlpatterns = [
     path('api/', include('books.urls')),
     path('api/', include('borrowing.urls')),
     path('api/', include('fines.urls')),
-    path('api/config/fines/', fine_config_view, name='fine_config'),
-]  
+    path('api/export/snapshot/', DatabaseSnapshotExportAPIView.as_view(), name='api_export_snapshot'),
+    path('api/backups/', BackupListCreateAPIView.as_view(), name='api_backups'),
+    path('api/backups/<str:filename>/download/', BackupDownloadAPIView.as_view(), name='api_backup_download'),
+    path('api/activity-log/', ActivityLogAPIView.as_view(), name='api_activity_log'),
+    path('api/export/activity-log/', ActivityLogExportAPIView.as_view(), name='api_export_activity_log'),
+]
 
 urlpatterns += static(
     settings.MEDIA_URL,

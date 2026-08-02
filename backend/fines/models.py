@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from borrowing.models import BorrowRecord
+from simple_history.models import HistoricalRecords
 
 User = get_user_model()
 
@@ -91,3 +92,5 @@ class Fine(models.Model):
             )
             return fine
         return None
+
+    history = HistoricalRecords()

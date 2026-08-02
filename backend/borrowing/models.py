@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from books.models import Book
+from simple_history.models import HistoricalRecords
 
 User = get_user_model()
 
@@ -61,6 +62,7 @@ class BorrowRecord(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
 
 
     class Meta:
@@ -170,3 +172,6 @@ class BorrowRecord(models.Model):
         if self.is_overdue:
             self.status = self.Status.OVERDUE
             self.save()
+
+
+    history = HistoricalRecords()

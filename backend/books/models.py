@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.contrib.auth import get_user_model
+from simple_history.models import HistoricalRecords
 
 User = get_user_model()
 
@@ -37,6 +38,7 @@ class Genre(models.Model):
             return f"{self.parent.full_path} > {self.name}"
         return self.name
 
+    history = HistoricalRecords()
 
 class Book(models.Model):
     """Book — belongs to a specific library"""
@@ -89,6 +91,7 @@ class Book(models.Model):
             return f"{self.available_copies} available"
         return "Not available"
 
+    history = HistoricalRecords()
 
 class BookSuggestion(models.Model):
     """Members suggest books for their library to acquire"""
