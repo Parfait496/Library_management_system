@@ -22,6 +22,20 @@ EXTRA_HOSTS = config('ALLOWED_HOSTS', default='')
 if EXTRA_HOSTS:
     ALLOWED_HOSTS += [h.strip() for h in EXTRA_HOSTS.split(',')]
 
+# ---------------------------------------------------------------------------
+# CSRF / PROXY — fixes "CSRF verification failed" on /admin/ when deployed
+# behind Railway (or any reverse proxy that terminates HTTPS in front of
+# your app). Without SECURE_PROXY_SSL_HEADER, Django doesn't know the
+# original request was HTTPS, so its CSRF/Referer checks fail.
+# ---------------------------------------------------------------------------
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in config('CSRF_TRUSTED_ORIGINS', default='').split(',')
+    if origin.strip()
+]
+
 # ===========================================================================
 # APPLICATIONS
 # ===========================================================================
@@ -32,8 +46,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'cloudinary_storage',      # add — must come before staticfiles-dependent apps
-    'cloudinary',              # add
+    'cloudinary_storage',
+    'cloudinary',
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
@@ -84,12 +98,11 @@ TEMPLATES = [
 # ===========================================================================
 # DATABASE
 # SQLite for local development — zero setup needed
-# PostgreSQL for production via DATABASE_URL on Render
+# PostgreSQL for production via DATABASE_URL
 # ===========================================================================
 DATABASE_URL = config('DATABASE_URL', default=None)
 
 if DATABASE_URL:
-    # Production — Render PostgreSQL
     import dj_database_url
     DATABASES = {
         'default': dj_database_url.parse(
@@ -98,7 +111,6 @@ if DATABASE_URL:
         )
     }
 else:
-    # Local development — SQLite (zero setup)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -142,7 +154,6 @@ SIMPLE_JWT = {
 # ===========================================================================
 # CORS
 # ===========================================================================
-
 CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=False, cast=bool)
 
 CORS_ALLOWED_ORIGINS = [
@@ -172,9 +183,6 @@ CORS_ALLOW_METHODS = [
 
 # ===========================================================================
 # EMAIL
-# Dummy backend — emails silently discarded
-# No money needed, no errors
-# To enable real emails later just change EMAIL_BACKEND in .env
 # ===========================================================================
 EMAIL_BACKEND = config(
     'EMAIL_BACKEND',
