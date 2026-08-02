@@ -1,0 +1,47 @@
+# .github/workflows/db-backup.yml
+#
+# Runs daily at 02:00 UTC, dumps the entire Postgres database, and
+# uploads it as a GitHub Actions artifact (kept for 90 days, private
+# to your repo). This works no matter which host runs your database —
+# Render, Railway, Supabase, etc. — since it just connects using the
+# same DATABASE_URL your app already uses.
+#
+# SETUP (one-time):
+# 1. In your GitHub repo: Settings → Secrets and variables → Actions
+# 2. Add a new secret named DATABASE_URL with your production
+#    Postgres connection string (the same one your Django app uses).
+# 3. Commit this file. It starts running automatically on schedule —
+#    no server-side changes needed.
+#
+# To restore from a backup later:
+#   1. Download the artifact zip from the Actions tab
+#   2. psql <your-database-url> < backup.sql
+
+name: Database Backup
+
+on:
+  schedule:
+    - cron: '0 2 * * *'   # every day at 02:00 UTC
+  workflow_dispatch:        # lets you also trigger it manually from the Actions tab
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install postgresql-client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Dump database
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          pg_dump "$DATABASE_URL" --no-owner --no-privileges -F c -f "backup_${TIMESTAMP}.dump"
+          echo "BACKUP_FILE=backup_${TIMESTAMP}.dump" >> $GITHUB_ENV
+
+      - name: Upload backup as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup-${{ github.run_id }}
+          path: ${{ env.BACKUP_FILE }}
+          retention-days: 90

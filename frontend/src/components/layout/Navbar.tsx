@@ -1,10 +1,12 @@
 import React, { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { downloadSnapshotApi } from '../../api/export'
 import {
   BookOpen, LayoutDashboard, Clock,
   Users, ClipboardList,
   DollarSign, LogOut, User, Menu,
-  X, ChevronDown, Lightbulb,
+  X, ChevronDown, Lightbulb, Download,
+  Database, History,
 } from 'lucide-react'
 import useAuth from '../../hooks/useAuth'
 
@@ -207,6 +209,43 @@ const Navbar: React.FC = () => {
                     <User className="w-4 h-4" />
                     My Profile
                   </Link>
+
+                  {isAdmin && (
+                    <>
+                      <hr className="my-1 border-gray-100" />
+                      <p className="px-4 pt-1 pb-1.5 text-[10px] font-semibold
+                                    text-gray-400 uppercase tracking-wide">
+                        Admin Tools
+                      </p>
+                      <button
+                        onClick={() => { setDropdownOpen(false); downloadSnapshotApi() }}
+                        className="flex items-center gap-2 px-4 py-2 text-sm
+                                   text-gray-700 hover:bg-gray-50 w-full text-left"
+                      >
+                        <Download className="w-4 h-4" />
+                        Export Data (.xlsx)
+                      </button>
+                      <Link
+                        to="/backups"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm
+                                   text-gray-700 hover:bg-gray-50"
+                      >
+                        <Database className="w-4 h-4" />
+                        Backups
+                      </Link>
+                      <Link
+                        to="/activity-log"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm
+                                   text-gray-700 hover:bg-gray-50"
+                      >
+                        <History className="w-4 h-4" />
+                        Activity Log
+                      </Link>
+                    </>
+                  )}
+
                   <hr className="my-1 border-gray-100" />
                   <button
                     onClick={handleLogout}

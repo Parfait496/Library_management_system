@@ -164,7 +164,7 @@ const BookDetail: React.FC = () => {
             )}
 
             {/* Admin only — delete */}
-            {isAdmin && (
+            {(isAdmin || isLibrarian) && (
               <Button
                 fullWidth
                 variant="danger"

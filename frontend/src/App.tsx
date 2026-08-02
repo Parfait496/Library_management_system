@@ -1,5 +1,5 @@
 import React from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
 import ProtectedRoute from './components/routing/ProtectedRoute'
 import PublicRoute    from './components/routing/PublicRoute'
@@ -7,7 +7,6 @@ import Layout         from './components/layout/Layout'
 
 import Landing          from './pages/Landing'
 import Login            from './pages/auth/Login'
-import ForgotPassword   from './pages/auth/ForgotPassword'
 import Dashboard        from './pages/dashboard/Dashboard'
 import BookList         from './pages/books/BookList'
 import BookDetail       from './pages/books/BookDetail'
@@ -24,6 +23,9 @@ import MemberDetail     from './pages/members/MemberDetail'
 import MyProfile        from './pages/profile/MyProfile'
 import CreateUser       from './pages/users/CreateUser'
 import NotFound         from './pages/NotFound'
+
+import Backups          from './pages/admin/Backups'
+import ActivityLog     from './pages/admin/ActivityLog'
 
 const App: React.FC = () => {
   return (
@@ -68,6 +70,12 @@ const App: React.FC = () => {
               <Route path="/members/:id"     element={<MemberDetail />} />
               <Route path="/genres"          element={<GenreManagement />} />
               <Route path="/users/create"    element={<CreateUser />} />
+            </Route>
+
+            {/* Admin only */}
+            <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
+              <Route path="/backups" element={<Backups />} />
+              <Route path="/activity-log" element={<ActivityLog />} />
             </Route>
 
           </Route>

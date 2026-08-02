@@ -2,9 +2,8 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Search, BookOpen, BookMarked, Lightbulb,
-  Clock, Shield, Users, ChevronDown,
+  Clock, ChevronDown,
   ArrowRight, CheckCircle, Menu, X,
-  Star, Heart, Zap
 } from 'lucide-react'
 
 const Landing: React.FC = () => {
@@ -28,6 +27,7 @@ const Landing: React.FC = () => {
       3500
     )
     return () => clearInterval(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleSearch = (e: React.FormEvent) => {

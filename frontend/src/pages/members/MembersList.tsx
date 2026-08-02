@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, Users, Eye, UserPlus } from 'lucide-react'
+import { Search, Users, Eye, UserPlus, Download } from 'lucide-react'
+import { downloadMembersExportApi } from '../../api/export'
 import { getMembersApi } from '../../api/users'
 import { User } from '../../types'
 import useAuth from '../../hooks/useAuth'
@@ -46,10 +47,16 @@ const MembersList: React.FC = () => {
           </p>
         </div>
         {(isAdmin || isLibrarian) && (
-          <Button onClick={() => navigate('/users/create')}>
-            <UserPlus className="w-4 h-4" />
-            Add User
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" onClick={() => downloadMembersExportApi()}>
+              <Download className="w-4 h-4" />
+              Export
+            </Button>
+            <Button onClick={() => navigate('/users/create')}>
+              <UserPlus className="w-4 h-4" />
+              Add User
+            </Button>
+          </div>
         )}
       </div>
 

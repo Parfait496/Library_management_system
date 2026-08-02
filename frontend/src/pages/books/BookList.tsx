@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, Plus, BookOpen, Filter, Upload, Tag } from 'lucide-react'
+import { Search, Plus, BookOpen, Filter, Upload, Tag, Download } from 'lucide-react'
+import { downloadBooksExportApi } from '../../api/export'
 import { getBooksApi, getGenresApi } from '../../api/books'
 import { Book, Genre } from '../../types'
 import useAuth from '../../hooks/useAuth'
@@ -74,6 +75,10 @@ const BookList: React.FC = () => {
         </div>
         {(isLibrarian || isAdmin) && (
           <div className="flex items-center gap-2">
+            <Button variant="secondary" onClick={() => downloadBooksExportApi()}>
+              <Download className="w-4 h-4" />
+              Export
+            </Button>
             <Button variant="secondary" onClick={() => navigate('/books/import')}>
               <Upload className="w-4 h-4" />
               Import

@@ -82,9 +82,7 @@ const Dashboard: React.FC = () => {
         const pending  = allBorrows.filter(
           b => b.status === 'REQUESTED'
         )
-        const approved = allBorrows.filter(
-          b => b.status === 'APPROVED'
-        )
+
         const active   = allBorrows.filter(
           b => ['BORROWED', 'OVERDUE'].includes(b.status)
         )

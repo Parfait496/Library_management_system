@@ -1,7 +1,7 @@
-import axios from 'axios'
+
 import api from './axios'
 import { LoginCredentials, AuthTokens, User } from '../types'
-import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, API_BASE_URL } from '../utils/constants'
+import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY } from '../utils/constants'
 
 export const loginApi = async (
   credentials: LoginCredentials
