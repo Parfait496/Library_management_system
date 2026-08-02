@@ -32,17 +32,19 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'cloudinary_storage',      # add — must come before staticfiles-dependent apps
+    'cloudinary',              # add
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
-    'simple_history',
-    # Your apps
     'users',
     'books',
     'borrowing',
     'fines',
 ]
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 # ===========================================================================
 # MIDDLEWARE
