@@ -59,6 +59,7 @@ INSTALLED_APPS = [
 ]
 
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+CLOUDINARY_STORAGE = {'SECURE': True}
 
 # ===========================================================================
 # MIDDLEWARE

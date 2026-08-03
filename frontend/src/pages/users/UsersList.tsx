@@ -67,8 +67,9 @@ const UsersList: React.FC = () => {
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      {/* Header — stacks vertically on mobile instead of squeezing
+          the title and button onto one line */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
             Users
@@ -147,7 +148,6 @@ const UsersList: React.FC = () => {
                                  hover:bg-gray-50 transition-colors">
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
-                        {/* Avatar */}
                         <div className="w-9 h-9 rounded-full
                                         bg-blue-100 flex items-center
                                         justify-center flex-shrink-0
@@ -166,28 +166,28 @@ const UsersList: React.FC = () => {
                             </span>
                           )}
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900">
+                        <div className="min-w-0">
+                          <p className="font-medium text-gray-900 truncate">
                             {getDisplayName(user)}
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-gray-500 truncate">
                             @{user.username}
                             {user.email && ` • ${user.email}`}
                           </p>
                         </div>
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-gray-600">
+                    <td className="py-3 px-4 text-gray-600 whitespace-nowrap">
                       {user.student_id || '—'}
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-3 px-4 whitespace-nowrap">
                       <span className={`text-xs font-medium px-2.5
                                        py-1 rounded-full
                                        ${roleBadge(user.role)}`}>
                         {user.role}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-gray-500">
+                    <td className="py-3 px-4 text-gray-500 whitespace-nowrap">
                       {formatDate(user.created_at)}
                     </td>
                     <td className="py-3 px-4">
