@@ -64,7 +64,7 @@ const BookList: React.FC = () => {
   return (
     <div>
       {/* Page header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
             Book Catalogue
@@ -74,7 +74,7 @@ const BookList: React.FC = () => {
           </p>
         </div>
         {(isLibrarian || isAdmin) && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Button variant="secondary" onClick={() => downloadBooksExportApi()}>
               <Download className="w-4 h-4" />
               Export

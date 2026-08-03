@@ -313,6 +313,41 @@ const Navbar: React.FC = () => {
               My Profile
             </Link>
 
+            {isAdmin && (
+              <>
+                <p className="px-3 pt-3 pb-1 text-[10px] font-semibold
+                              text-gray-400 uppercase tracking-wide">
+                  Admin Tools
+                </p>
+                <button
+                  onClick={() => { setMobileOpen(false); downloadSnapshotApi() }}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg
+                             text-sm text-gray-600 hover:bg-gray-100 w-full text-left"
+                >
+                  <Download className="w-4 h-4" />
+                  Export Data (.xlsx)
+                </button>
+                <Link
+                  to="/backups"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg
+                             text-sm text-gray-600 hover:bg-gray-100"
+                >
+                  <Database className="w-4 h-4" />
+                  Backups
+                </Link>
+                <Link
+                  to="/activity-log"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg
+                             text-sm text-gray-600 hover:bg-gray-100"
+                >
+                  <History className="w-4 h-4" />
+                  Activity Log
+                </Link>
+              </>
+            )}
+
             <button
               onClick={handleLogout}
               className="flex items-center gap-2 px-3 py-2.5
